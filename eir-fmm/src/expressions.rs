@@ -106,12 +106,34 @@ pub fn compile(
                 element.index(),
             )?
         }
+        eir::ir::Expression::String(string) => fmm::build::bit_cast(
+            types::compile_string(),
+            module_builder.define_anonymous_variable(
+                fmm::build::record(
+                    vec![
+                        fmm::ir::Primitive::PointerInteger(string.value().as_bytes().len() as i64)
+                            .into(),
+                    ]
+                    .into_iter()
+                    .chain(
+                        string
+                            .value()
+                            .as_bytes()
+                            .iter()
+                            .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
+                    )
+                    .collect(),
+                ),
+                false,
+            ),
+        )
+        .into(),
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
             compile_variant_tag(variant.type_()),
             compile_payload_bit_cast(
                 instruction_builder,
-                types::compile_payload(),
+                types::compile_variant_payload(),
                 compile(variant.payload(), variables)?,
             )?,
         ])

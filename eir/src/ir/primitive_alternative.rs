@@ -31,7 +31,7 @@ impl PrimitiveAlternative {
 
     pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
         Self {
-            primitive: self.primitive.clone(),
+            primitive: self.primitive,
             expression: self.expression.infer_environment(variables),
         }
     }

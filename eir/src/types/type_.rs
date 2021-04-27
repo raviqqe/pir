@@ -7,6 +7,7 @@ pub enum Type {
     Function(Function),
     Primitive(Primitive),
     Reference(Reference),
+    String,
     Variant,
 }
 

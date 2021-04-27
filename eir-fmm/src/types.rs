@@ -20,6 +20,7 @@ pub fn compile(
         }
         eir::types::Type::Primitive(primitive) => compile_primitive(primitive),
         eir::types::Type::Reference(reference) => compile_reference(reference, types),
+        eir::types::Type::String => compile_string().into(),
         eir::types::Type::Variant => compile_variant().into(),
     }
 }
@@ -36,8 +37,15 @@ pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type 
     }
 }
 
-pub fn compile_variant() -> fmm::types::Record {
-    fmm::types::Record::new(vec![compile_variant_tag().into(), compile_payload().into()])
+pub fn compile_string() -> fmm::types::Pointer {
+    fmm::types::Pointer::new(fmm::types::Record::new(vec![]))
+}
+
+fn compile_variant() -> fmm::types::Record {
+    fmm::types::Record::new(vec![
+        compile_variant_tag().into(),
+        compile_variant_payload().into(),
+    ])
 }
 
 pub fn compile_variant_tag() -> fmm::types::Pointer {
@@ -47,7 +55,7 @@ pub fn compile_variant_tag() -> fmm::types::Pointer {
     ]))
 }
 
-pub fn compile_payload() -> fmm::types::Primitive {
+pub fn compile_variant_payload() -> fmm::types::Primitive {
     fmm::types::Primitive::Integer64
 }
 

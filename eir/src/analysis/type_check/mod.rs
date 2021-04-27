@@ -158,6 +158,7 @@ fn check_expression(
                 .ok_or_else(|| TypeCheckError::ElementIndexOutOfBounds(element.clone()))?
                 .clone()
         }
+        Expression::String(_) => Type::String,
         Expression::Variable(variable) => check_variable(variable, variables)?,
         Expression::Variant(variant) => {
             if matches!(variant.type_(), Type::Variant) {

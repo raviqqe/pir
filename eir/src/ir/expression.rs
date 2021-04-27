@@ -8,6 +8,7 @@ use super::primitive::Primitive;
 use super::primitive_case::PrimitiveCase;
 use super::record::Record;
 use super::record_element::RecordElement;
+use super::string::EirString;
 use super::variable::Variable;
 use super::variant::Variant;
 use super::variant_case::VariantCase;
@@ -19,6 +20,7 @@ pub enum Expression {
     ArithmeticOperation(ArithmeticOperation),
     Case(Case),
     ComparisonOperation(ComparisonOperation),
+    String(EirString),
     FunctionApplication(FunctionApplication),
     Let(Let),
     LetRecursive(LetRecursive),
@@ -51,7 +53,7 @@ impl Expression {
             Self::RecordElement(element) => element.find_variables(),
             Self::Variable(variable) => variable.find_variables(),
             Self::Variant(variant) => variant.find_variables(),
-            Self::Primitive(_) => HashSet::new(),
+            Self::Primitive(_) | Self::String(_) => HashSet::new(),
         }
     }
 
@@ -68,7 +70,7 @@ impl Expression {
             Self::Record(record) => record.infer_environment(variables).into(),
             Self::RecordElement(element) => element.infer_environment(variables).into(),
             Self::Variant(variant) => variant.infer_environment(variables).into(),
-            Self::Primitive(_) | Self::Variable(_) => self.clone(),
+            Self::Primitive(_) | Self::String(_) | Self::Variable(_) => self.clone(),
         }
     }
 }
@@ -88,6 +90,12 @@ impl From<Case> for Expression {
 impl From<ComparisonOperation> for Expression {
     fn from(operation: ComparisonOperation) -> Self {
         Self::ComparisonOperation(operation)
+    }
+}
+
+impl From<EirString> for Expression {
+    fn from(string: EirString) -> Self {
+        Self::String(string)
     }
 }
 
