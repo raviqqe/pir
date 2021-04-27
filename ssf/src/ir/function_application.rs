@@ -63,13 +63,6 @@ impl FunctionApplication {
             self.argument.infer_environment(variables),
         )
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self::new(
-            self.function.convert_types(convert),
-            self.argument.convert_types(convert),
-        )
-    }
 }
 
 #[cfg(test)]

@@ -66,19 +66,4 @@ impl PrimitiveCase {
                 .map(|expression| expression.infer_environment(variables).into()),
         }
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            argument: self.argument.convert_types(convert).into(),
-            alternatives: self
-                .alternatives
-                .iter()
-                .map(|alternative| alternative.convert_types(convert))
-                .collect(),
-            default_alternative: self
-                .default_alternative
-                .as_ref()
-                .map(|expression| expression.convert_types(convert).into()),
-        }
-    }
 }

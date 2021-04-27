@@ -68,13 +68,4 @@ impl Let {
             },
         )
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self::new(
-            self.name.clone(),
-            convert(&self.type_),
-            self.bound_expression.convert_types(convert),
-            self.expression.convert_types(convert),
-        )
-    }
 }

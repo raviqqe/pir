@@ -1,19 +1,21 @@
 use crate::expressions;
 use crate::types::{self, FUNCTION_ARGUMENT_OFFSET};
+use std::collections::HashMap;
 
 pub fn compile_foreign_declaration(
     module_builder: &fmm::build::ModuleBuilder,
     declaration: &ssf::ir::ForeignDeclaration,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<(), fmm::build::BuildError> {
     module_builder.define_variable(
         declaration.name(),
         fmm::build::record(vec![
-            compile_entry_function(module_builder, declaration)?,
+            compile_entry_function(module_builder, declaration, types)?,
             expressions::compile_arity(declaration.type_().arguments().into_iter().count()).into(),
             fmm::ir::Undefined::new(types::compile_unsized_environment()).into(),
         ]),
         false,
-        false,
+        fmm::ir::Linkage::Internal,
     );
 
     Ok(())
@@ -22,6 +24,7 @@ pub fn compile_foreign_declaration(
 fn compile_entry_function(
     module_builder: &fmm::build::ModuleBuilder,
     declaration: &ssf::ir::ForeignDeclaration,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let arguments = vec![fmm::ir::Argument::new(
         "_env",
@@ -35,13 +38,16 @@ fn compile_entry_function(
             .into_iter()
             .enumerate()
             .map(|(index, type_)| {
-                fmm::ir::Argument::new(format!("arg_{}", index), types::compile(type_))
+                fmm::ir::Argument::new(format!("arg_{}", index), types::compile(type_, types))
             }),
     )
     .collect::<Vec<_>>();
 
-    let foreign_function_type =
-        types::compile_foreign_function(declaration.type_(), declaration.calling_convention());
+    let foreign_function_type = types::compile_foreign_function(
+        declaration.type_(),
+        declaration.calling_convention(),
+        types,
+    );
 
     module_builder.define_anonymous_function(
         arguments.clone(),

@@ -1,15 +1,17 @@
 use crate::function_applications;
 use crate::types;
+use std::collections::HashMap;
 
 pub fn compile_foreign_definition(
     module_builder: &fmm::build::ModuleBuilder,
     definition: &ssf::ir::ForeignDefinition,
     function_type: &ssf::types::Function,
     global_variable: &fmm::build::TypedExpression,
+    types: &HashMap<String, ssf::types::Record>,
 ) -> Result<(), fmm::build::BuildError> {
     // TODO Support a target calling convention.
     let foreign_function_type =
-        types::compile_foreign_function(function_type, ssf::ir::CallingConvention::Source);
+        types::compile_foreign_function(function_type, ssf::ir::CallingConvention::Source, types);
     let arguments = foreign_function_type
         .arguments()
         .iter()
@@ -33,7 +35,7 @@ pub fn compile_foreign_definition(
         },
         foreign_function_type.result().clone(),
         foreign_function_type.calling_convention(),
-        true,
+        fmm::ir::Linkage::External,
     )?;
 
     Ok(())

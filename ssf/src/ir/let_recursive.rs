@@ -55,14 +55,4 @@ impl LetRecursive {
             self.expression.infer_environment(&variables),
         )
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self::new(
-            self.definitions
-                .iter()
-                .map(|definition| definition.convert_types(convert))
-                .collect(),
-            self.expression.convert_types(convert),
-        )
-    }
 }

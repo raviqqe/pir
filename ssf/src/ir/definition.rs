@@ -56,20 +56,13 @@ impl Definition {
         is_thunk: bool,
     ) -> Self {
         Self {
-            type_: types::canonicalize(
-                &arguments.iter().rev().skip(1).fold(
-                    types::Function::new(
-                        arguments.iter().last().unwrap().type_().clone(),
-                        result_type.clone(),
-                    )
-                    .into(),
-                    |result, argument| {
-                        types::Function::new(argument.type_().clone(), result).into()
-                    },
+            type_: arguments.iter().rev().skip(1).fold(
+                types::Function::new(
+                    arguments.iter().last().unwrap().type_().clone(),
+                    result_type.clone(),
                 ),
-            )
-            .into_function()
-            .unwrap(),
+                |result, argument| types::Function::new(argument.type_().clone(), result),
+            ),
             name: name.into(),
             environment,
             arguments,
@@ -146,26 +139,6 @@ impl Definition {
             self.result_type.clone(),
             self.is_thunk,
         )
-    }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            name: self.name.clone(),
-            environment: self
-                .environment
-                .iter()
-                .map(|argument| argument.convert_types(convert))
-                .collect(),
-            arguments: self
-                .arguments
-                .iter()
-                .map(|argument| argument.convert_types(convert))
-                .collect(),
-            body: self.body.convert_types(convert),
-            result_type: convert(&self.result_type.clone()),
-            type_: convert(&self.type_.clone().into()).into_function().unwrap(),
-            is_thunk: self.is_thunk,
-        }
     }
 }
 

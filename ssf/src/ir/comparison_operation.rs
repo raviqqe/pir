@@ -51,12 +51,4 @@ impl ComparisonOperation {
             self.rhs.infer_environment(variables),
         )
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self::new(
-            self.operator,
-            self.lhs.convert_types(convert),
-            self.rhs.convert_types(convert),
-        )
-    }
 }

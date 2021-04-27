@@ -1,5 +1,5 @@
 use super::calling_convention::CallingConvention;
-use crate::types::{self, Type};
+use crate::types;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ForeignDeclaration {
@@ -38,14 +38,5 @@ impl ForeignDeclaration {
 
     pub fn calling_convention(&self) -> CallingConvention {
         self.calling_convention
-    }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            name: self.name.clone(),
-            foreign_name: self.foreign_name.clone(),
-            type_: convert(&self.type_.clone().into()).into_function().unwrap(),
-            calling_convention: self.calling_convention,
-        }
     }
 }

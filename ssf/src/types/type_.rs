@@ -1,25 +1,18 @@
-use super::algebraic::Algebraic;
 use super::function::Function;
 use super::primitive::Primitive;
+use super::reference::Reference;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
-    Algebraic(Algebraic),
     Function(Function),
-    Index(usize),
     Primitive(Primitive),
+    Reference(Reference),
+    Variant,
 }
 
 impl Type {
     pub fn is_primitive(&self) -> bool {
         matches!(self, Self::Primitive(_))
-    }
-
-    pub fn into_algebraic(self) -> Option<Algebraic> {
-        match self {
-            Self::Algebraic(algebraic) => Some(algebraic),
-            _ => None,
-        }
     }
 
     pub fn into_function(self) -> Option<Function> {
@@ -35,11 +28,12 @@ impl Type {
             _ => None,
         }
     }
-}
 
-impl From<Algebraic> for Type {
-    fn from(algebraic: Algebraic) -> Self {
-        Self::Algebraic(algebraic)
+    pub fn into_reference(self) -> Option<Reference> {
+        match self {
+            Self::Reference(reference) => Some(reference),
+            _ => None,
+        }
     }
 }
 
@@ -52,5 +46,11 @@ impl From<Function> for Type {
 impl From<Primitive> for Type {
     fn from(primitive: Primitive) -> Self {
         Self::Primitive(primitive)
+    }
+}
+
+impl From<Reference> for Type {
+    fn from(reference: Reference) -> Self {
+        Self::Reference(reference)
     }
 }

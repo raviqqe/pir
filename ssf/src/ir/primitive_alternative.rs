@@ -35,11 +35,4 @@ impl PrimitiveAlternative {
             expression: self.expression.infer_environment(variables),
         }
     }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            primitive: self.primitive.clone(),
-            expression: self.expression.convert_types(convert),
-        }
-    }
 }

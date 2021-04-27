@@ -6,6 +6,11 @@ pub use error::TypeCheckError;
 use std::collections::*;
 
 pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
+    let types = module
+        .type_definitions()
+        .iter()
+        .map(|definition| (definition.name(), definition.type_()))
+        .collect();
     let mut variables = HashMap::<&str, Type>::new();
 
     for declaration in module.foreign_declarations() {
@@ -21,7 +26,7 @@ pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
     }
 
     for definition in module.definitions() {
-        check_definition(definition, &variables)?;
+        check_definition(definition, &variables, &types)?;
     }
 
     for definition in module.foreign_definitions() {
@@ -38,6 +43,7 @@ pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
 fn check_definition(
     definition: &Definition,
     variables: &HashMap<&str, Type>,
+    types: &HashMap<&str, &types::Record>,
 ) -> Result<(), TypeCheckError> {
     let mut variables = variables.clone();
 
@@ -50,7 +56,7 @@ fn check_definition(
     }
 
     check_equality(
-        &check_expression(definition.body(), &variables)?,
+        &check_expression(definition.body(), &variables, types)?,
         &definition.result_type().clone(),
     )
 }
@@ -58,7 +64,10 @@ fn check_definition(
 fn check_expression(
     expression: &Expression,
     variables: &HashMap<&str, Type>,
+    types: &HashMap<&str, &types::Record>,
 ) -> Result<Type, TypeCheckError> {
+    let check_expression = |expression, variables| check_expression(expression, variables, types);
+
     Ok(match expression {
         Expression::ArithmeticOperation(operation) => {
             let lhs_type = check_expression(operation.lhs(), variables)?;
@@ -70,11 +79,7 @@ fn check_expression(
 
             lhs_type
         }
-        Expression::BitCast(bit_cast) => {
-            check_expression(bit_cast.expression(), variables)?;
-            bit_cast.type_().clone()
-        }
-        Expression::Case(case) => check_case(case, variables)?,
+        Expression::Case(case) => check_case(case, variables, types)?,
         Expression::ComparisonOperation(operation) => {
             let lhs_type = check_expression(operation.lhs(), variables)?;
             let rhs_type = check_expression(operation.rhs(), variables)?;
@@ -84,29 +89,6 @@ fn check_expression(
             }
 
             types::Primitive::Boolean.into()
-        }
-        Expression::ConstructorApplication(constructor_application) => {
-            let constructor = constructor_application.constructor();
-
-            if constructor_application.arguments().len()
-                != constructor.constructor_type().elements().len()
-            {
-                return Err(TypeCheckError::WrongArgumentsLength(expression.clone()));
-            }
-
-            for (argument, element_type) in constructor_application
-                .arguments()
-                .iter()
-                .zip(constructor.constructor_type().elements())
-            {
-                check_equality(&check_expression(argument, variables)?, &element_type)?;
-            }
-
-            constructor_application
-                .constructor()
-                .algebraic_type()
-                .clone()
-                .into()
         }
         Expression::FunctionApplication(function_application) => {
             let function_type = check_expression(function_application.function(), variables)?
@@ -130,7 +112,7 @@ fn check_expression(
             }
 
             for definition in let_recursive.definitions() {
-                check_definition(definition, &variables)?;
+                check_definition(definition, &variables, &types)?;
             }
 
             check_expression(let_recursive.expression(), &variables)?
@@ -147,60 +129,66 @@ fn check_expression(
             check_expression(let_.expression(), &variables)?
         }
         Expression::Primitive(primitive) => Ok(check_primitive(primitive).into())?,
+        Expression::Record(record) => {
+            let record_type = types
+                .get(record.type_().name())
+                .ok_or_else(|| TypeCheckError::TypeNotFound(record.type_().clone()))?;
+
+            if record.elements().len() != record_type.elements().len() {
+                return Err(TypeCheckError::WrongElementCount(expression.clone()));
+            }
+
+            for (element, element_type) in record.elements().iter().zip(record_type.elements()) {
+                check_equality(&check_expression(element, variables)?, &element_type)?;
+            }
+
+            record.type_().clone().into()
+        }
+        Expression::RecordElement(element) => {
+            check_equality(
+                &check_expression(element.record(), variables)?,
+                &element.type_().clone().into(),
+            )?;
+
+            types
+                .get(element.type_().name())
+                .ok_or_else(|| TypeCheckError::TypeNotFound(element.type_().clone()))?
+                .elements()
+                .get(element.index())
+                .ok_or_else(|| TypeCheckError::ElementIndexOutOfBounds(element.clone()))?
+                .clone()
+        }
         Expression::Variable(variable) => check_variable(variable, variables)?,
+        Expression::Variant(variant) => {
+            if matches!(variant.type_(), Type::Variant) {
+                return Err(TypeCheckError::VariantInVariant(variant.clone()));
+            }
+
+            check_equality(
+                &check_expression(variant.payload(), variables)?,
+                variant.type_(),
+            )?;
+
+            Type::Variant
+        }
     })
 }
 
-fn check_case(case: &Case, variables: &HashMap<&str, Type>) -> Result<Type, TypeCheckError> {
+fn check_case(
+    case: &Case,
+    variables: &HashMap<&str, Type>,
+    types: &HashMap<&str, &types::Record>,
+) -> Result<Type, TypeCheckError> {
+    let check_expression = |expression: &Expression, variables: &HashMap<&str, Type>| {
+        check_expression(expression, variables, types)
+    };
+
     match case {
-        Case::Algebraic(algebraic_case) => {
-            let argument_type = check_expression(algebraic_case.argument(), variables)?;
+        Case::Primitive(case) => {
+            let argument_type = check_expression(case.argument(), variables)?;
             let mut expression_type = None;
 
-            for alternative in algebraic_case.alternatives() {
-                let constructor = alternative.constructor();
-
-                check_equality(
-                    &constructor.algebraic_type().clone().into(),
-                    &argument_type.clone(),
-                )?;
-
-                let mut variables = variables.clone();
-
-                for (name, type_) in alternative
-                    .element_names()
-                    .iter()
-                    .zip(constructor.constructor_type().elements())
-                {
-                    variables.insert(name, type_.clone());
-                }
-
-                let alternative_type = check_expression(alternative.expression(), &variables)?;
-
-                if let Some(expression_type) = &expression_type {
-                    check_equality(&alternative_type, expression_type)?;
-                } else {
-                    expression_type = Some(alternative_type);
-                }
-            }
-
-            if let Some(expression) = algebraic_case.default_alternative() {
-                let alternative_type = check_expression(expression, &variables)?;
-
-                if let Some(expression_type) = &expression_type {
-                    check_equality(&alternative_type, expression_type)?;
-                } else {
-                    expression_type = Some(alternative_type);
-                }
-            }
-
-            expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone()))
-        }
-        Case::Primitive(primitive_case) => {
-            let argument_type = check_expression(primitive_case.argument(), variables)?;
-            let mut expression_type = None;
-
-            for alternative in primitive_case.alternatives() {
+            for alternative in case.alternatives() {
                 check_equality(
                     &check_primitive(alternative.primitive()).into(),
                     &argument_type.clone(),
@@ -215,7 +203,7 @@ fn check_case(case: &Case, variables: &HashMap<&str, Type>) -> Result<Type, Type
                 }
             }
 
-            if let Some(expression) = primitive_case.default_alternative() {
+            if let Some(expression) = case.default_alternative() {
                 let alternative_type = check_expression(expression, &variables)?;
 
                 if let Some(expression_type) = &expression_type {
@@ -225,7 +213,41 @@ fn check_case(case: &Case, variables: &HashMap<&str, Type>) -> Result<Type, Type
                 }
             }
 
-            expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone()))
+            expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone().into()))
+        }
+        Case::Variant(case) => {
+            check_equality(
+                &check_expression(case.argument(), variables)?,
+                &Type::Variant,
+            )?;
+
+            let mut expression_type = None;
+
+            for alternative in case.alternatives() {
+                let mut variables = variables.clone();
+
+                variables.insert(alternative.name(), alternative.type_().clone());
+
+                let alternative_type = check_expression(alternative.expression(), &variables)?;
+
+                if let Some(expression_type) = &expression_type {
+                    check_equality(&alternative_type, expression_type)?;
+                } else {
+                    expression_type = Some(alternative_type);
+                }
+            }
+
+            if let Some(expression) = case.default_alternative() {
+                let alternative_type = check_expression(expression, &variables)?;
+
+                if let Some(expression_type) = &expression_type {
+                    check_equality(&alternative_type, expression_type)?;
+                } else {
+                    expression_type = Some(alternative_type);
+                }
+            }
+
+            expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone().into()))
         }
     }
 }
@@ -266,51 +288,52 @@ mod tests {
     use crate::ir::*;
     use crate::types::{self, Type};
 
+    fn create_module_from_definitions(definitions: Vec<Definition>) -> Module {
+        Module::new(vec![], vec![], vec![], vec![], definitions)
+    }
+
+    fn create_module_with_records(
+        type_definitions: Vec<TypeDefinition>,
+        definitions: Vec<Definition>,
+    ) -> Module {
+        Module::new(type_definitions, vec![], vec![], vec![], definitions)
+    }
+
     #[test]
     fn check_types_with_empty_modules() {
         assert_eq!(
-            check_types(&Module::new(vec![], vec![], vec![], vec![])),
+            check_types(&Module::new(vec![], vec![], vec![], vec![], vec![])),
             Ok(())
         );
     }
 
     #[test]
     fn check_types_of_variables() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Variable::new("x"),
-                types::Primitive::Float64,
-            )],
-        );
+        let module = create_module_from_definitions(vec![Definition::new(
+            "f",
+            vec![Argument::new("x", types::Primitive::Float64)],
+            Variable::new("x"),
+            types::Primitive::Float64,
+        )]);
         assert_eq!(check_types(&module), Ok(()));
     }
 
     #[test]
     fn fail_to_check_types_of_variables() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![
-                Definition::new(
-                    "f",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    42.0,
-                    types::Primitive::Float64,
-                ),
-                Definition::new(
-                    "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    Variable::new("f"),
-                    types::Primitive::Float64,
-                ),
-            ],
-        );
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                42.0,
+                types::Primitive::Float64,
+            ),
+            Definition::new(
+                "g",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                Variable::new("f"),
+                types::Primitive::Float64,
+            ),
+        ]);
 
         assert!(matches!(
             check_types(&module),
@@ -320,42 +343,32 @@ mod tests {
 
     #[test]
     fn check_types_of_functions() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                42.0,
-                types::Primitive::Float64,
-            )],
-        );
+        let module = create_module_from_definitions(vec![Definition::new(
+            "f",
+            vec![Argument::new("x", types::Primitive::Float64)],
+            42.0,
+            types::Primitive::Float64,
+        )]);
 
         assert_eq!(check_types(&module), Ok(()));
     }
 
     #[test]
     fn fail_to_check_types_of_functions() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![
-                Definition::new(
-                    "f",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    42.0,
-                    types::Primitive::Float64,
-                ),
-                Definition::new(
-                    "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    Variable::new("f"),
-                    types::Primitive::Float64,
-                ),
-            ],
-        );
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                42.0,
+                types::Primitive::Float64,
+            ),
+            Definition::new(
+                "g",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                Variable::new("f"),
+                types::Primitive::Float64,
+            ),
+        ]);
 
         assert!(matches!(
             check_types(&module),
@@ -365,53 +378,40 @@ mod tests {
 
     #[test]
     fn check_types_of_function_applications() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![
-                Definition::new(
-                    "f",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    42.0,
-                    types::Primitive::Float64,
-                ),
-                Definition::new(
-                    "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    FunctionApplication::new(Variable::new("f"), 42.0),
-                    types::Primitive::Float64,
-                ),
-            ],
-        );
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                42.0,
+                types::Primitive::Float64,
+            ),
+            Definition::new(
+                "g",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                FunctionApplication::new(Variable::new("f"), 42.0),
+                types::Primitive::Float64,
+            ),
+        ]);
 
         assert_eq!(check_types(&module), Ok(()));
     }
 
     #[test]
     fn fail_to_check_types_of_function_applications() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![
-                Definition::new(
-                    "f",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    42.0,
-                    types::Primitive::Float64,
-                ),
-                Definition::new(
-                    "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    FunctionApplication::new(
-                        FunctionApplication::new(Variable::new("f"), 42.0),
-                        42.0,
-                    ),
-                    types::Primitive::Float64,
-                ),
-            ],
-        );
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                42.0,
+                types::Primitive::Float64,
+            ),
+            Definition::new(
+                "g",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                FunctionApplication::new(FunctionApplication::new(Variable::new("f"), 42.0), 42.0),
+                types::Primitive::Float64,
+            ),
+        ]);
 
         assert!(matches!(
             check_types(&module),
@@ -421,17 +421,12 @@ mod tests {
 
     #[test]
     fn fail_to_check_types_because_of_missing_variables() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Variable::new("y"),
-                types::Primitive::Float64,
-            )],
-        );
+        let module = create_module_from_definitions(vec![Definition::new(
+            "f",
+            vec![Argument::new("x", types::Primitive::Float64)],
+            Variable::new("y"),
+            types::Primitive::Float64,
+        )]);
 
         assert!(matches!(
             check_types(&module),
@@ -441,57 +436,47 @@ mod tests {
 
     #[test]
     fn check_types_of_nested_let_expressions() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Let::new(
-                    "y",
-                    types::Primitive::Float64,
-                    42.0,
-                    Let::new(
-                        "z",
-                        types::Primitive::Float64,
-                        Variable::new("y"),
-                        Variable::new("z"),
-                    ),
-                ),
+        let module = create_module_from_definitions(vec![Definition::new(
+            "f",
+            vec![Argument::new("x", types::Primitive::Float64)],
+            Let::new(
+                "y",
                 types::Primitive::Float64,
-            )],
-        );
+                42.0,
+                Let::new(
+                    "z",
+                    types::Primitive::Float64,
+                    Variable::new("y"),
+                    Variable::new("z"),
+                ),
+            ),
+            types::Primitive::Float64,
+        )]);
 
         assert_eq!(check_types(&module), Ok(()));
     }
 
     #[test]
     fn fail_to_check_types_of_let_expression() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![
-                Definition::new(
-                    "f",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    42.0,
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                42.0,
+                types::Primitive::Float64,
+            ),
+            Definition::new(
+                "g",
+                vec![Argument::new("x", types::Primitive::Float64)],
+                Let::new(
+                    "y",
                     types::Primitive::Float64,
+                    Variable::new("f"),
+                    Variable::new("y"),
                 ),
-                Definition::new(
-                    "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
-                    Let::new(
-                        "y",
-                        types::Primitive::Float64,
-                        Variable::new("f"),
-                        Variable::new("y"),
-                    ),
-                    types::Primitive::Float64,
-                ),
-            ],
-        );
+                types::Primitive::Float64,
+            ),
+        ]);
 
         assert!(matches!(
             check_types(&module),
@@ -502,6 +487,7 @@ mod tests {
     #[test]
     fn check_types_of_declarations() {
         let module = Module::new(
+            vec![],
             vec![],
             vec![],
             vec![Declaration::new(
@@ -521,6 +507,7 @@ mod tests {
     #[test]
     fn fail_to_check_types_of_declarations() {
         let module = Module::new(
+            vec![],
             vec![],
             vec![],
             vec![Declaration::new(
@@ -544,102 +531,51 @@ mod tests {
     mod case_expressions {
         use super::*;
 
-        mod algebraic {
+        mod variant {
             use super::*;
 
             #[test]
             fn check_case_expressions_only_with_default_alternative() {
-                let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-
                 assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::new(
-                            "f",
-                            vec![Argument::new("x", algebraic_type,)],
-                            AlgebraicCase::new(Variable::new("x"), vec![], Some(42.0.into()),),
-                            types::Primitive::Float64,
-                        )]
-                    )),
+                    check_types(&create_module_from_definitions(vec![Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Variant)],
+                        VariantCase::new(Variable::new("x"), vec![], Some(42.0.into()),),
+                        types::Primitive::Float64,
+                    )])),
                     Ok(())
                 );
             }
 
             #[test]
             fn check_case_expressions_with_one_alternative() {
-                let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-
                 assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::new(
-                            "f",
-                            vec![Argument::new("x", algebraic_type.clone())],
-                            AlgebraicCase::new(
-                                Variable::new("x"),
-                                vec![AlgebraicAlternative::new(
-                                    Constructor::new(algebraic_type, 0),
-                                    vec![],
-                                    42.0
-                                )],
-                                None
-                            ),
-                            types::Primitive::Float64,
-                        )]
-                    )),
-                    Ok(())
-                );
-            }
-
-            #[test]
-            fn check_case_expressions_with_deconstruction() {
-                let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-                    types::Primitive::Float64.into(),
-                ])]);
-
-                assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::new(
-                            "f",
-                            vec![Argument::new("x", algebraic_type.clone())],
-                            AlgebraicCase::new(
-                                Variable::new("x"),
-                                vec![AlgebraicAlternative::new(
-                                    Constructor::new(algebraic_type, 0),
-                                    vec!["y".into()],
-                                    Variable::new("y")
-                                )],
-                                None
-                            ),
-                            types::Primitive::Float64,
-                        )]
-                    )),
+                    check_types(&create_module_from_definitions(vec![Definition::new(
+                        "f",
+                        vec![Argument::new("x", Type::Variant)],
+                        VariantCase::new(
+                            Variable::new("x"),
+                            vec![VariantAlternative::new(
+                                types::Primitive::Float64,
+                                "y",
+                                Variable::new("y")
+                            )],
+                            None
+                        ),
+                        types::Primitive::Float64,
+                    )])),
                     Ok(())
                 );
             }
 
             #[test]
             fn fail_to_check_case_expressions_without_alternatives() {
-                let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-
-                let module = Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![Definition::new(
-                        "f",
-                        vec![Argument::new("x", algebraic_type)],
-                        AlgebraicCase::new(Variable::new("x"), vec![], None),
-                        types::Primitive::Float64,
-                    )],
-                );
+                let module = create_module_from_definitions(vec![Definition::new(
+                    "f",
+                    vec![Argument::new("x", Type::Variant)],
+                    VariantCase::new(Variable::new("x"), vec![], None),
+                    types::Primitive::Float64,
+                )]);
 
                 assert!(matches!(
                     check_types(&module),
@@ -649,37 +585,24 @@ mod tests {
 
             #[test]
             fn fail_to_check_case_expressions_with_inconsistent_alternative_types() {
-                let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-                let module = Module::new(
+                let module = create_module_from_definitions(vec![Definition::with_environment(
+                    "f",
                     vec![],
-                    vec![],
-                    vec![],
-                    vec![Definition::with_environment(
-                        "f",
-                        vec![],
-                        vec![Argument::new(
-                            "x",
-                            types::Algebraic::new(vec![types::Constructor::boxed(vec![])]),
-                        )],
-                        AlgebraicCase::new(
-                            Variable::new("x"),
-                            vec![
-                                AlgebraicAlternative::new(
-                                    Constructor::new(algebraic_type.clone(), 0),
-                                    vec![],
-                                    Variable::new("x"),
-                                ),
-                                AlgebraicAlternative::new(
-                                    Constructor::new(algebraic_type, 0),
-                                    vec![],
-                                    42.0,
-                                ),
-                            ],
-                            None,
-                        ),
-                        types::Primitive::Float64,
-                    )],
-                );
+                    vec![Argument::new("x", Type::Variant)],
+                    VariantCase::new(
+                        Variable::new("x"),
+                        vec![
+                            VariantAlternative::new(
+                                types::Primitive::Integer64,
+                                "x",
+                                Variable::new("x"),
+                            ),
+                            VariantAlternative::new(types::Primitive::Float64, "x", 42.0),
+                        ],
+                        None,
+                    ),
+                    types::Primitive::Float64,
+                )]);
 
                 assert!(matches!(
                     check_types(&module),
@@ -688,62 +611,25 @@ mod tests {
             }
 
             #[test]
-            fn check_case_expressions_with_recursive_algebraic_types() {
-                let algebraic_type =
-                    types::Algebraic::new(vec![types::Constructor::boxed(vec![Type::Index(0)])]);
-
-                assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::with_environment(
-                            "f",
-                            vec![],
-                            vec![Argument::new("x", algebraic_type.clone())],
-                            AlgebraicCase::new(
-                                Variable::new("x"),
-                                vec![AlgebraicAlternative::new(
-                                    Constructor::new(algebraic_type.clone(), 0),
-                                    vec!["y".into()],
-                                    Variable::new("y"),
-                                )],
-                                None,
-                            ),
-                            algebraic_type,
-                        )]
-                    )),
-                    Ok(())
-                );
-            }
-
-            #[test]
             fn fail_for_unmatched_case_type() {
-                let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
-                let other_algebraic_type =
-                    types::Algebraic::new(vec![types::Constructor::unboxed(vec![])]);
-
                 assert!(matches!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::with_environment(
+                    check_types(&create_module_from_definitions(vec![
+                        Definition::with_environment(
                             "f",
                             vec![],
-                            vec![Argument::new("x", algebraic_type)],
-                            AlgebraicCase::new(
+                            vec![Argument::new("x", Type::Variant)],
+                            VariantCase::new(
                                 Variable::new("x"),
-                                vec![AlgebraicAlternative::new(
-                                    Constructor::new(other_algebraic_type, 0),
-                                    vec![],
-                                    42.0
+                                vec![VariantAlternative::new(
+                                    types::Reference::new("foo"),
+                                    "y",
+                                    Variable::new("y")
                                 )],
                                 None
                             ),
-                            types::Primitive::Float64,
-                        )],
-                    )),
+                            types::Reference::new("bar"),
+                        )
+                    ])),
                     Err(TypeCheckError::TypesNotMatched(_, _))
                 ));
             }
@@ -755,18 +641,15 @@ mod tests {
             #[test]
             fn check_case_expressions_only_with_default_alternative() {
                 assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::with_environment(
+                    check_types(&create_module_from_definitions(vec![
+                        Definition::with_environment(
                             "f",
                             vec![],
                             vec![Argument::new("x", types::Primitive::Float64)],
                             PrimitiveCase::new(42.0, vec![], Some(42.0.into()),),
                             types::Primitive::Float64,
-                        )]
-                    )),
+                        )
+                    ])),
                     Ok(())
                 );
             }
@@ -774,11 +657,8 @@ mod tests {
             #[test]
             fn check_case_expressions_with_one_alternative() {
                 assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::with_environment(
+                    check_types(&create_module_from_definitions(vec![
+                        Definition::with_environment(
                             "f",
                             vec![],
                             vec![Argument::new("x", types::Primitive::Float64)],
@@ -788,8 +668,8 @@ mod tests {
                                 None
                             ),
                             types::Primitive::Float64,
-                        )],
-                    )),
+                        )
+                    ],)),
                     Ok(())
                 );
             }
@@ -797,11 +677,8 @@ mod tests {
             #[test]
             fn check_case_expressions_with_one_alternative_and_default_alternative() {
                 assert_eq!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::with_environment(
+                    check_types(&create_module_from_definitions(vec![
+                        Definition::with_environment(
                             "f",
                             vec![],
                             vec![Argument::new("x", types::Primitive::Float64)],
@@ -811,8 +688,8 @@ mod tests {
                                 Some(42.0.into())
                             ),
                             types::Primitive::Float64,
-                        )],
-                    )),
+                        )
+                    ],)),
                     Ok(())
                 );
             }
@@ -820,11 +697,8 @@ mod tests {
             #[test]
             fn fail_for_unmatched_case_type() {
                 assert!(matches!(
-                    check_types(&Module::new(
-                        vec![],
-                        vec![],
-                        vec![],
-                        vec![Definition::with_environment(
+                    check_types(&create_module_from_definitions(vec![
+                        Definition::with_environment(
                             "f",
                             vec![],
                             vec![Argument::new("x", types::Primitive::Float64)],
@@ -834,35 +708,30 @@ mod tests {
                                 Some(42.0.into())
                             ),
                             types::Primitive::Float64,
-                        )],
-                    )),
+                        )
+                    ],)),
                     Err(TypeCheckError::TypesNotMatched(_, _))
                 ));
             }
         }
     }
 
-    mod constructor_applications {
+    mod records {
         use super::*;
 
         #[test]
-        fn check_constructor_applications_with_no_arguments() {
-            let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![])]);
+        fn check_records_with_no_element() {
+            let reference_type = types::Reference::new("foo");
 
             assert_eq!(
-                check_types(&Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
+                check_types(&create_module_with_records(
+                    vec![TypeDefinition::new("foo", types::Record::new(vec![]))],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Float64)],
-                        ConstructorApplication::new(
-                            Constructor::new(algebraic_type.clone(), 0),
-                            vec![],
-                        ),
-                        algebraic_type,
+                        Record::new(reference_type.clone(), vec![]),
+                        reference_type,
                     )],
                 )),
                 Ok(())
@@ -870,25 +739,21 @@ mod tests {
         }
 
         #[test]
-        fn check_constructor_applications_with_arguments() {
-            let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-                types::Primitive::Float64.into(),
-            ])]);
+        fn check_records_with_elements() {
+            let reference_type = types::Reference::new("foo");
 
             assert_eq!(
-                check_types(&Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
+                check_types(&create_module_with_records(
+                    vec![TypeDefinition::new(
+                        "foo",
+                        types::Record::new(vec![types::Primitive::Float64.into()])
+                    )],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Float64)],
-                        ConstructorApplication::new(
-                            Constructor::new(algebraic_type.clone(), 0),
-                            vec![42.0.into()],
-                        ),
-                        algebraic_type,
+                        Record::new(reference_type.clone(), vec![42.0.into()],),
+                        reference_type,
                     )],
                 )),
                 Ok(())
@@ -896,54 +761,44 @@ mod tests {
         }
 
         #[test]
-        fn fail_to_check_constructor_applications_with_wrong_number_of_arguments() {
-            let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-                types::Primitive::Float64.into(),
-            ])]);
-            let module = Module::new(
-                vec![],
-                vec![],
-                vec![],
+        fn fail_to_check_records_with_wrong_number_of_elements() {
+            let reference_type = types::Reference::new("foo");
+
+            let module = create_module_with_records(
+                vec![TypeDefinition::new(
+                    "foo",
+                    types::Record::new(vec![types::Primitive::Float64.into()]),
+                )],
                 vec![Definition::with_environment(
                     "f",
                     vec![],
                     vec![Argument::new("x", types::Primitive::Float64)],
-                    ConstructorApplication::new(
-                        Constructor::new(algebraic_type.clone(), 0),
-                        vec![42.0.into(), 42.0.into()],
-                    ),
-                    algebraic_type,
+                    Record::new(reference_type.clone(), vec![42.0.into(), 42.0.into()]),
+                    reference_type,
                 )],
             );
 
             assert!(matches!(
                 check_types(&module),
-                Err(TypeCheckError::WrongArgumentsLength(_))
+                Err(TypeCheckError::WrongElementCount(_))
             ));
         }
 
         #[test]
-        fn fail_to_check_constructor_applications_with_wrong_argument_type() {
-            let algebraic_type = types::Algebraic::new(vec![types::Constructor::boxed(vec![
-                types::Primitive::Float64.into(),
-            ])]);
-            let module = Module::new(
-                vec![],
-                vec![],
-                vec![],
+        fn fail_to_check_records_with_wrong_element_type() {
+            let reference_type = types::Reference::new("foo");
+
+            let module = create_module_with_records(
+                vec![TypeDefinition::new(
+                    "foo",
+                    types::Record::new(vec![types::Primitive::Float64.into()]),
+                )],
                 vec![Definition::with_environment(
                     "f",
                     vec![],
                     vec![Argument::new("x", types::Primitive::Float64)],
-                    ConstructorApplication::new(
-                        Constructor::new(algebraic_type.clone(), 0),
-                        vec![ConstructorApplication::new(
-                            Constructor::new(algebraic_type.clone(), 0),
-                            vec![42.0.into()],
-                        )
-                        .into()],
-                    ),
-                    algebraic_type,
+                    Record::new(reference_type.clone(), vec![true.into()]),
+                    reference_type,
                 )],
             );
 
@@ -954,23 +809,25 @@ mod tests {
         }
 
         #[test]
-        fn check_constructor_applications_of_recursive_algebraic_types() {
-            let algebraic_type =
-                types::Algebraic::new(vec![types::Constructor::boxed(vec![Type::Index(0)])]);
+        fn check_record_element() {
+            let reference_type = types::Reference::new("foo");
 
             assert_eq!(
-                check_types(&Module::new(
-                    vec![],
-                    vec![],
-                    vec![],
-                    vec![Definition::new(
+                check_types(&create_module_with_records(
+                    vec![TypeDefinition::new(
+                        "foo",
+                        types::Record::new(vec![types::Primitive::Float64.into()])
+                    )],
+                    vec![Definition::with_environment(
                         "f",
-                        vec![Argument::new("x", algebraic_type.clone())],
-                        ConstructorApplication::new(
-                            Constructor::new(algebraic_type.clone(), 0),
-                            vec![Variable::new("x").into()],
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        RecordElement::new(
+                            reference_type.clone(),
+                            0,
+                            Record::new(reference_type, vec![42.0.into()],)
                         ),
-                        algebraic_type,
+                        types::Primitive::Float64
                     )],
                 )),
                 Ok(())
@@ -978,54 +835,63 @@ mod tests {
         }
     }
 
-    #[test]
-    fn check_bit_cast() {
-        let module = Module::new(
-            vec![],
-            vec![],
-            vec![],
-            vec![Definition::with_environment(
-                "f",
-                vec![],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                BitCast::new(42, types::Primitive::Float64),
-                types::Primitive::Float64,
-            )],
-        );
-        assert_eq!(check_types(&module), Ok(()));
+    mod variants {
+        use super::*;
+
+        #[test]
+        fn check_variant() {
+            assert_eq!(
+                check_types(&create_module_from_definitions(vec![
+                    Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", types::Primitive::Float64)],
+                        Variant::new(types::Primitive::Float64, Primitive::Float64(42.0),),
+                        Type::Variant
+                    )
+                ],)),
+                Ok(())
+            );
+        }
+
+        #[test]
+        fn fail_to_check_variant_in_variant() {
+            assert!(matches!(
+                check_types(&create_module_from_definitions(vec![
+                    Definition::with_environment(
+                        "f",
+                        vec![],
+                        vec![Argument::new("x", Type::Variant)],
+                        Variant::new(Type::Variant, Variable::new("x")),
+                        Type::Variant
+                    )
+                ],)),
+                Err(TypeCheckError::VariantInVariant(_))
+            ));
+        }
     }
 
     #[test]
     fn check_add_operator() {
-        let module = Module::new(
+        let module = create_module_from_definitions(vec![Definition::with_environment(
+            "f",
             vec![],
-            vec![],
-            vec![],
-            vec![Definition::with_environment(
-                "f",
-                vec![],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                ArithmeticOperation::new(ArithmeticOperator::Add, 42.0, 42.0),
-                types::Primitive::Float64,
-            )],
-        );
+            vec![Argument::new("x", types::Primitive::Float64)],
+            ArithmeticOperation::new(ArithmeticOperator::Add, 42.0, 42.0),
+            types::Primitive::Float64,
+        )]);
         assert_eq!(check_types(&module), Ok(()));
     }
 
     #[test]
     fn check_equality_operator() {
-        let module = Module::new(
+        let module = create_module_from_definitions(vec![Definition::with_environment(
+            "f",
             vec![],
-            vec![],
-            vec![],
-            vec![Definition::with_environment(
-                "f",
-                vec![],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                ComparisonOperation::new(ComparisonOperator::Equal, 42.0, 42.0),
-                types::Primitive::Boolean,
-            )],
-        );
+            vec![Argument::new("x", types::Primitive::Float64)],
+            ComparisonOperation::new(ComparisonOperator::Equal, 42.0, 42.0),
+            types::Primitive::Boolean,
+        )]);
         assert_eq!(check_types(&module), Ok(()));
     }
 
@@ -1035,6 +901,7 @@ mod tests {
         #[test]
         fn check_types_of_foreign_declarations() {
             let module = Module::new(
+                vec![],
                 vec![ForeignDeclaration::new(
                     "f",
                     "g",
@@ -1056,6 +923,7 @@ mod tests {
         #[test]
         fn fail_to_check_types_of_foreign_declarations() {
             let module = Module::new(
+                vec![],
                 vec![ForeignDeclaration::new(
                     "f",
                     "g",
@@ -1086,6 +954,7 @@ mod tests {
         fn check_types_of_foreign_definition_for_declaration() {
             let module = Module::new(
                 vec![],
+                vec![],
                 vec![ForeignDefinition::new("f", "g")],
                 vec![Declaration::new(
                     "f",
@@ -1100,6 +969,7 @@ mod tests {
         #[test]
         fn check_types_of_foreign_definition_for_definition() {
             let module = Module::new(
+                vec![],
                 vec![],
                 vec![ForeignDefinition::new("f", "g")],
                 vec![],

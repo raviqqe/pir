@@ -1,4 +1,4 @@
-use crate::types::{self, Type};
+use crate::types;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Declaration {
@@ -20,12 +20,5 @@ impl Declaration {
 
     pub fn type_(&self) -> &types::Function {
         &self.type_
-    }
-
-    pub(crate) fn convert_types(&self, convert: &impl Fn(&Type) -> Type) -> Self {
-        Self {
-            name: self.name.clone(),
-            type_: convert(&self.type_.clone().into()).into_function().unwrap(),
-        }
     }
 }

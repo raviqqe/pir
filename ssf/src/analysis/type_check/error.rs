@@ -1,16 +1,19 @@
 use crate::ir::*;
-use crate::types::Type;
+use crate::types::{self, Type};
 use std::error::Error;
 use std::fmt::Display;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TypeCheckError {
+    ElementIndexOutOfBounds(RecordElement),
     ForeignDefinitionNotFound(ForeignDefinition),
     FunctionExpected(Expression),
     NoAlternativeFound(Case),
+    TypeNotFound(types::Reference),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
-    WrongArgumentsLength(Expression),
+    VariantInVariant(Variant),
+    WrongElementCount(Expression),
 }
 
 impl Display for TypeCheckError {
