@@ -6,9 +6,9 @@ const ENVIRONMENT_NAME: &str = "_env";
 
 pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &ssf::ir::Definition,
+    definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(if definition.is_thunk() {
         compile_thunk(module_builder, definition, variables, types)?
@@ -19,9 +19,9 @@ pub fn compile(
 
 fn compile_non_thunk(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &ssf::ir::Definition,
+    definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
@@ -41,9 +41,9 @@ fn compile_non_thunk(
 
 fn compile_thunk(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &ssf::ir::Definition,
+    definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     compile_first_thunk_entry(
         module_builder,
@@ -58,9 +58,9 @@ fn compile_thunk(
 fn compile_body(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    definition: &ssf::ir::Definition,
+    definition: &eir::ir::Definition,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     expressions::compile(
         module_builder,
@@ -103,11 +103,11 @@ fn compile_body(
 
 fn compile_first_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &ssf::ir::Definition,
+    definition: &eir::ir::Definition,
     normal_entry_function: fmm::build::TypedExpression,
     lock_entry_function: fmm::build::TypedExpression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let entry_function_name = module_builder.generate_name();
     let entry_function_type = types::compile_entry_function_from_definition(definition, types);
@@ -188,8 +188,8 @@ fn compile_first_thunk_entry(
 
 fn compile_normal_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     module_builder.define_anonymous_function(
         compile_arguments(definition, types),
@@ -201,8 +201,8 @@ fn compile_normal_thunk_entry(
 
 fn compile_locked_thunk_entry(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let entry_function_name = module_builder.generate_name();
 
@@ -244,8 +244,8 @@ fn compile_locked_thunk_entry(
 
 fn compile_normal_body(
     instruction_builder: &fmm::build::InstructionBuilder,
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::ir::Block, fmm::build::BuildError> {
     Ok(
         instruction_builder.return_(instruction_builder.load(fmm::build::bit_cast(
@@ -257,8 +257,8 @@ fn compile_normal_body(
 
 fn compile_entry_function_pointer_pointer(
     instruction_builder: &fmm::build::InstructionBuilder,
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     // TODO Calculate entry function pointer properly.
     // The offset should be calculated by allocating a record of
@@ -275,8 +275,8 @@ fn compile_entry_function_pointer_pointer(
 }
 
 fn compile_arguments(
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Vec<fmm::ir::Argument> {
     vec![fmm::ir::Argument::new(
         ENVIRONMENT_NAME,

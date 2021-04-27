@@ -11,9 +11,9 @@ pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
 pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    expression: &ssf::ir::Expression,
+    expression: &eir::ir::Expression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let compile = |expression, variables| {
         compile(
@@ -26,7 +26,7 @@ pub fn compile(
     };
 
     Ok(match expression {
-        ssf::ir::Expression::ArithmeticOperation(operation) => compile_arithmetic_operation(
+        eir::ir::Expression::ArithmeticOperation(operation) => compile_arithmetic_operation(
             module_builder,
             instruction_builder,
             operation,
@@ -34,10 +34,10 @@ pub fn compile(
             types,
         )?
         .into(),
-        ssf::ir::Expression::Case(case) => {
+        eir::ir::Expression::Case(case) => {
             compile_case(module_builder, instruction_builder, case, variables, types)?
         }
-        ssf::ir::Expression::ComparisonOperation(operation) => compile_comparison_operation(
+        eir::ir::Expression::ComparisonOperation(operation) => compile_comparison_operation(
             module_builder,
             instruction_builder,
             operation,
@@ -45,7 +45,7 @@ pub fn compile(
             types,
         )?
         .into(),
-        ssf::ir::Expression::FunctionApplication(function_application) => {
+        eir::ir::Expression::FunctionApplication(function_application) => {
             function_applications::compile(
                 module_builder,
                 instruction_builder,
@@ -57,18 +57,18 @@ pub fn compile(
                     .collect::<Result<Vec<_>, _>>()?,
             )?
         }
-        ssf::ir::Expression::Let(let_) => {
+        eir::ir::Expression::Let(let_) => {
             compile_let(module_builder, instruction_builder, let_, variables, types)?
         }
-        ssf::ir::Expression::LetRecursive(let_recursive) => compile_let_recursive(
+        eir::ir::Expression::LetRecursive(let_recursive) => compile_let_recursive(
             module_builder,
             instruction_builder,
             let_recursive,
             variables,
             types,
         )?,
-        ssf::ir::Expression::Primitive(primitive) => compile_primitive(primitive).into(),
-        ssf::ir::Expression::Record(record) => {
+        eir::ir::Expression::Primitive(primitive) => compile_primitive(primitive).into(),
+        eir::ir::Expression::Record(record) => {
             let unboxed = fmm::build::record(
                 record
                     .elements()
@@ -88,7 +88,7 @@ pub fn compile(
                 unboxed.into()
             }
         }
-        ssf::ir::Expression::RecordElement(element) => {
+        eir::ir::Expression::RecordElement(element) => {
             let record = compile(element.record(), variables)?;
 
             instruction_builder.deconstruct_record(
@@ -106,8 +106,8 @@ pub fn compile(
                 element.index(),
             )?
         }
-        ssf::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
-        ssf::ir::Expression::Variant(variant) => fmm::build::record(vec![
+        eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
+        eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
             compile_variant_tag(variant.type_()),
             compile_payload_bit_cast(
                 instruction_builder,
@@ -122,15 +122,15 @@ pub fn compile(
 fn compile_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &ssf::ir::Case,
+    case: &eir::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(match case {
-        ssf::ir::Case::Primitive(case) => {
+        eir::ir::Case::Primitive(case) => {
             compile_primitive_case(module_builder, instruction_builder, case, variables, types)?
         }
-        ssf::ir::Case::Variant(case) => {
+        eir::ir::Case::Variant(case) => {
             compile_variant_case(module_builder, instruction_builder, case, variables, types)?
         }
     })
@@ -139,9 +139,9 @@ fn compile_case(
 fn compile_variant_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &ssf::ir::VariantCase,
+    case: &eir::ir::VariantCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
@@ -167,10 +167,10 @@ fn compile_variant_alternatives(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[ssf::ir::VariantAlternative],
-    default_alternative: Option<&ssf::ir::Expression>,
+    alternatives: &[eir::ir::VariantAlternative],
+    default_alternative: Option<&eir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     Ok(match alternatives {
         [] => default_alternative
@@ -237,7 +237,7 @@ fn compile_variant_alternatives(
     })
 }
 
-fn compile_variant_tag(type_: &ssf::types::Type) -> fmm::build::TypedExpression {
+fn compile_variant_tag(type_: &eir::types::Type) -> fmm::build::TypedExpression {
     fmm::build::variable(types::compile_type_id(type_), types::compile_variant_tag())
 }
 
@@ -266,9 +266,9 @@ fn compile_payload_bit_cast(
 fn compile_primitive_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &ssf::ir::PrimitiveCase,
+    case: &eir::ir::PrimitiveCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
@@ -294,10 +294,10 @@ fn compile_primitive_alternatives(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[ssf::ir::PrimitiveAlternative],
-    default_alternative: Option<&ssf::ir::Expression>,
+    alternatives: &[eir::ir::PrimitiveAlternative],
+    default_alternative: Option<&eir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -344,9 +344,9 @@ fn compile_primitive_alternatives(
 fn compile_let(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    let_: &ssf::ir::Let,
+    let_: &eir::ir::Let,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let compile = |expression, variables| {
         compile(
@@ -374,9 +374,9 @@ fn compile_let(
 fn compile_let_recursive(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    let_: &ssf::ir::LetRecursive,
+    let_: &eir::ir::LetRecursive,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let mut variables = variables.clone();
     let mut closure_pointers = HashMap::new();
@@ -422,9 +422,9 @@ fn compile_let_recursive(
 fn compile_arithmetic_operation(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    operation: &ssf::ir::ArithmeticOperation,
+    operation: &eir::ir::ArithmeticOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::ir::ArithmeticOperation, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -440,16 +440,16 @@ fn compile_arithmetic_operation(
     let rhs = compile(operation.rhs())?;
 
     Ok(match operation.operator() {
-        ssf::ir::ArithmeticOperator::Add => {
+        eir::ir::ArithmeticOperator::Add => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Add, lhs, rhs)?
         }
-        ssf::ir::ArithmeticOperator::Subtract => {
+        eir::ir::ArithmeticOperator::Subtract => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Subtract, lhs, rhs)?
         }
-        ssf::ir::ArithmeticOperator::Multiply => {
+        eir::ir::ArithmeticOperator::Multiply => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Multiply, lhs, rhs)?
         }
-        ssf::ir::ArithmeticOperator::Divide => {
+        eir::ir::ArithmeticOperator::Divide => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Divide, lhs, rhs)?
         }
     })
@@ -458,9 +458,9 @@ fn compile_arithmetic_operation(
 fn compile_comparison_operation(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    operation: &ssf::ir::ComparisonOperation,
+    operation: &eir::ir::ComparisonOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, ssf::types::Record>,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::ir::ComparisonOperation, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -477,14 +477,14 @@ fn compile_comparison_operation(
 
     fmm::build::comparison_operation(
         match operation.operator() {
-            ssf::ir::ComparisonOperator::Equal => fmm::ir::ComparisonOperator::Equal,
-            ssf::ir::ComparisonOperator::NotEqual => fmm::ir::ComparisonOperator::NotEqual,
-            ssf::ir::ComparisonOperator::GreaterThan => fmm::ir::ComparisonOperator::GreaterThan,
-            ssf::ir::ComparisonOperator::GreaterThanOrEqual => {
+            eir::ir::ComparisonOperator::Equal => fmm::ir::ComparisonOperator::Equal,
+            eir::ir::ComparisonOperator::NotEqual => fmm::ir::ComparisonOperator::NotEqual,
+            eir::ir::ComparisonOperator::GreaterThan => fmm::ir::ComparisonOperator::GreaterThan,
+            eir::ir::ComparisonOperator::GreaterThanOrEqual => {
                 fmm::ir::ComparisonOperator::GreaterThanOrEqual
             }
-            ssf::ir::ComparisonOperator::LessThan => fmm::ir::ComparisonOperator::LessThan,
-            ssf::ir::ComparisonOperator::LessThanOrEqual => {
+            eir::ir::ComparisonOperator::LessThan => fmm::ir::ComparisonOperator::LessThan,
+            eir::ir::ComparisonOperator::LessThanOrEqual => {
                 fmm::ir::ComparisonOperator::LessThanOrEqual
             }
         },
@@ -493,13 +493,13 @@ fn compile_comparison_operation(
     )
 }
 
-fn compile_primitive(primitive: &ssf::ir::Primitive) -> fmm::ir::Primitive {
+fn compile_primitive(primitive: &eir::ir::Primitive) -> fmm::ir::Primitive {
     match primitive {
-        ssf::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(*boolean),
-        ssf::ir::Primitive::Float32(number) => fmm::ir::Primitive::Float32(*number),
-        ssf::ir::Primitive::Float64(number) => fmm::ir::Primitive::Float64(*number),
-        ssf::ir::Primitive::Integer8(number) => fmm::ir::Primitive::Integer8(*number),
-        ssf::ir::Primitive::Integer32(number) => fmm::ir::Primitive::Integer32(*number),
-        ssf::ir::Primitive::Integer64(number) => fmm::ir::Primitive::Integer64(*number),
+        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(*boolean),
+        eir::ir::Primitive::Float32(number) => fmm::ir::Primitive::Float32(*number),
+        eir::ir::Primitive::Float64(number) => fmm::ir::Primitive::Float64(*number),
+        eir::ir::Primitive::Integer8(number) => fmm::ir::Primitive::Integer8(*number),
+        eir::ir::Primitive::Integer32(number) => fmm::ir::Primitive::Integer32(*number),
+        eir::ir::Primitive::Integer64(number) => fmm::ir::Primitive::Integer64(*number),
     }
 }

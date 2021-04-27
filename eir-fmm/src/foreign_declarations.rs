@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 pub fn compile_foreign_declaration(
     module_builder: &fmm::build::ModuleBuilder,
-    declaration: &ssf::ir::ForeignDeclaration,
-    types: &HashMap<String, ssf::types::Record>,
+    declaration: &eir::ir::ForeignDeclaration,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<(), fmm::build::BuildError> {
     module_builder.define_variable(
         declaration.name(),
@@ -23,8 +23,8 @@ pub fn compile_foreign_declaration(
 
 fn compile_entry_function(
     module_builder: &fmm::build::ModuleBuilder,
-    declaration: &ssf::ir::ForeignDeclaration,
-    types: &HashMap<String, ssf::types::Record>,
+    declaration: &eir::ir::ForeignDeclaration,
+    types: &HashMap<String, eir::types::Record>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let arguments = vec![fmm::ir::Argument::new(
         "_env",

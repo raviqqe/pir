@@ -59,6 +59,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
+name = "eir"
+version = "0.1.0"
+dependencies = [
+ "pretty_assertions",
+]
+
+[[package]]
+name = "eir-fmm"
+version = "0.1.0"
+dependencies = [
+ "eir",
+ "fmm",
+ "fmm-c",
+ "fmm-llvm",
+ "tempfile",
+]
+
+[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -398,24 +416,6 @@ name = "smallvec"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe0f37c9e8f3c5a4a66ad655a93c74daac4ad00c441533bf5c6e7990bb42604e"
-
-[[package]]
-name = "ssf"
-version = "0.1.0"
-dependencies = [
- "pretty_assertions",
-]
-
-[[package]]
-name = "ssf-fmm"
-version = "0.1.0"
-dependencies = [
- "fmm",
- "fmm-c",
- "fmm-llvm",
- "ssf",
- "tempfile",
-]
 
 [[package]]
 name = "syn"

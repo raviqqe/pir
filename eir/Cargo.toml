@@ -1,5 +1,5 @@
 [package]
-name = "ssf"
+name = "eir"
 description = "Structurally-typed strict functional core language"
 version = "0.1.0"
 license = "MIT"

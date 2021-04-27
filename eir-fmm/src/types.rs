@@ -11,28 +11,28 @@ pub fn get_arity(type_: &fmm::types::Function) -> usize {
 }
 
 pub fn compile(
-    type_: &ssf::types::Type,
-    types: &HashMap<String, ssf::types::Record>,
+    type_: &eir::types::Type,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Type {
     match type_ {
-        ssf::types::Type::Function(function) => {
+        eir::types::Type::Function(function) => {
             fmm::types::Pointer::new(compile_unsized_closure(function, types)).into()
         }
-        ssf::types::Type::Primitive(primitive) => compile_primitive(primitive),
-        ssf::types::Type::Reference(reference) => compile_reference(reference, types),
-        ssf::types::Type::Variant => compile_variant().into(),
+        eir::types::Type::Primitive(primitive) => compile_primitive(primitive),
+        eir::types::Type::Reference(reference) => compile_reference(reference, types),
+        eir::types::Type::Variant => compile_variant().into(),
     }
 }
 
-pub fn compile_primitive(primitive: &ssf::types::Primitive) -> fmm::types::Type {
+pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type {
     match primitive {
-        ssf::types::Primitive::Boolean => fmm::types::Primitive::Boolean.into(),
-        ssf::types::Primitive::Float32 => fmm::types::Primitive::Float32.into(),
-        ssf::types::Primitive::Float64 => fmm::types::Primitive::Float64.into(),
-        ssf::types::Primitive::Integer8 => fmm::types::Primitive::Integer8.into(),
-        ssf::types::Primitive::Integer32 => fmm::types::Primitive::Integer32.into(),
-        ssf::types::Primitive::Integer64 => fmm::types::Primitive::Integer64.into(),
-        ssf::types::Primitive::Pointer => compile_generic_pointer().into(),
+        eir::types::Primitive::Boolean => fmm::types::Primitive::Boolean.into(),
+        eir::types::Primitive::Float32 => fmm::types::Primitive::Float32.into(),
+        eir::types::Primitive::Float64 => fmm::types::Primitive::Float64.into(),
+        eir::types::Primitive::Integer8 => fmm::types::Primitive::Integer8.into(),
+        eir::types::Primitive::Integer32 => fmm::types::Primitive::Integer32.into(),
+        eir::types::Primitive::Integer64 => fmm::types::Primitive::Integer64.into(),
+        eir::types::Primitive::Pointer => compile_generic_pointer().into(),
     }
 }
 
@@ -52,20 +52,20 @@ pub fn compile_payload() -> fmm::types::Primitive {
 }
 
 // TODO Optimize ID representation.
-pub fn compile_type_id(type_: &ssf::types::Type) -> String {
+pub fn compile_type_id(type_: &eir::types::Type) -> String {
     format!("{:?}", type_)
 }
 
 pub fn compile_reference(
-    reference: &ssf::types::Reference,
-    types: &HashMap<String, ssf::types::Record>,
+    reference: &eir::types::Reference,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Type {
     compile_record(&types[reference.name()], types)
 }
 
 pub fn compile_record(
-    record: &ssf::types::Record,
-    types: &HashMap<String, ssf::types::Record>,
+    record: &eir::types::Record,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Type {
     if is_record_boxed(record) {
         fmm::types::Pointer::new(fmm::types::Record::new(vec![])).into()
@@ -75,27 +75,27 @@ pub fn compile_record(
 }
 
 pub fn is_reference_boxed(
-    reference: &ssf::types::Reference,
-    types: &HashMap<String, ssf::types::Record>,
+    reference: &eir::types::Reference,
+    types: &HashMap<String, eir::types::Record>,
 ) -> bool {
     is_record_boxed(&types[reference.name()])
 }
 
 // TODO Unbox small non-recursive records.
-pub fn is_record_boxed(record: &ssf::types::Record) -> bool {
+pub fn is_record_boxed(record: &eir::types::Record) -> bool {
     !record.elements().is_empty()
 }
 
 pub fn compile_unboxed_reference(
-    reference: &ssf::types::Reference,
-    types: &HashMap<String, ssf::types::Record>,
+    reference: &eir::types::Reference,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Record {
     compile_unboxed_record(&types[reference.name()], types)
 }
 
 fn compile_unboxed_record(
-    record: &ssf::types::Record,
-    types: &HashMap<String, ssf::types::Record>,
+    record: &eir::types::Record,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Record {
     fmm::types::Record::new(
         record
@@ -107,8 +107,8 @@ fn compile_unboxed_record(
 }
 
 pub fn compile_sized_closure(
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Record {
     compile_raw_closure(
         compile_entry_function_from_definition(definition, types),
@@ -117,8 +117,8 @@ pub fn compile_sized_closure(
 }
 
 pub fn compile_closure_payload(
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Type {
     if definition.is_thunk() {
         fmm::types::Type::Union(fmm::types::Union::new(
@@ -133,8 +133,8 @@ pub fn compile_closure_payload(
 }
 
 pub fn compile_unsized_closure(
-    function: &ssf::types::Function,
-    types: &HashMap<String, ssf::types::Record>,
+    function: &eir::types::Function,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Record {
     compile_raw_closure(
         compile_entry_function(function.arguments(), function.last_result(), types),
@@ -154,8 +154,8 @@ pub fn compile_raw_closure(
 }
 
 pub fn compile_environment(
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Record {
     compile_raw_environment(
         definition
@@ -202,8 +202,8 @@ pub fn compile_curried_entry_function(
 }
 
 pub fn compile_entry_function_from_definition(
-    definition: &ssf::ir::Definition,
-    types: &HashMap<String, ssf::types::Record>,
+    definition: &eir::ir::Definition,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Function {
     compile_entry_function(
         definition
@@ -216,9 +216,9 @@ pub fn compile_entry_function_from_definition(
 }
 
 pub fn compile_entry_function<'a>(
-    arguments: impl IntoIterator<Item = &'a ssf::types::Type>,
-    result: &ssf::types::Type,
-    types: &HashMap<String, ssf::types::Record>,
+    arguments: impl IntoIterator<Item = &'a eir::types::Type>,
+    result: &eir::types::Type,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Function {
     fmm::types::Function::new(
         vec![fmm::types::Pointer::new(compile_unsized_environment()).into()]
@@ -231,9 +231,9 @@ pub fn compile_entry_function<'a>(
 }
 
 pub fn compile_foreign_function(
-    function: &ssf::types::Function,
-    calling_convention: ssf::ir::CallingConvention,
-    types: &HashMap<String, ssf::types::Record>,
+    function: &eir::types::Function,
+    calling_convention: eir::ir::CallingConvention,
+    types: &HashMap<String, eir::types::Record>,
 ) -> fmm::types::Function {
     fmm::types::Function::new(
         function
@@ -247,11 +247,11 @@ pub fn compile_foreign_function(
 }
 
 fn compile_calling_convention(
-    calling_convention: ssf::ir::CallingConvention,
+    calling_convention: eir::ir::CallingConvention,
 ) -> fmm::types::CallingConvention {
     match calling_convention {
-        ssf::ir::CallingConvention::Source => fmm::types::CallingConvention::Source,
-        ssf::ir::CallingConvention::Target => fmm::types::CallingConvention::Target,
+        eir::ir::CallingConvention::Source => fmm::types::CallingConvention::Source,
+        eir::ir::CallingConvention::Target => fmm::types::CallingConvention::Target,
     }
 }
 
