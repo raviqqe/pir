@@ -1,6 +1,6 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -52,20 +52,5 @@ impl Let {
                 variables
             })
             .collect()
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self::new(
-            self.name.clone(),
-            self.type_.clone(),
-            self.bound_expression.infer_environment(&variables),
-            {
-                let mut variables = variables.clone();
-
-                variables.insert(self.name.clone(), self.type_.clone());
-
-                self.expression.infer_environment(&variables)
-            },
-        )
     }
 }

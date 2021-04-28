@@ -1,7 +1,6 @@
 use super::primitive_case::PrimitiveCase;
 use super::variant_case::VariantCase;
-use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Case {
@@ -14,13 +13,6 @@ impl Case {
         match self {
             Self::Primitive(primitive_case) => primitive_case.find_variables(),
             Self::Variant(variant_case) => variant_case.find_variables(),
-        }
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        match self {
-            Self::Primitive(primitive_case) => primitive_case.infer_environment(variables).into(),
-            Self::Variant(variant_case) => variant_case.infer_environment(variables).into(),
         }
     }
 }

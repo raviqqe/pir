@@ -1,6 +1,6 @@
 use super::expression::Expression;
-use crate::types::{self, Type};
-use std::collections::{HashMap, HashSet};
+use crate::types;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -33,13 +33,5 @@ impl RecordElement {
 
     pub(crate) fn find_variables(&self) -> HashSet<String> {
         self.record.find_variables()
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self {
-            type_: self.type_.clone(),
-            index: self.index,
-            record: self.record.infer_environment(variables).into(),
-        }
     }
 }

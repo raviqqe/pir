@@ -1,7 +1,6 @@
 use super::comparison_operator::ComparisonOperator;
 use super::expression::Expression;
-use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -42,13 +41,5 @@ impl ComparisonOperation {
             .into_iter()
             .chain(self.rhs.find_variables())
             .collect()
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self::new(
-            self.operator,
-            self.lhs.infer_environment(variables),
-            self.rhs.infer_environment(variables),
-        )
     }
 }

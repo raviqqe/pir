@@ -12,8 +12,7 @@ use super::string::EirString;
 use super::variable::Variable;
 use super::variant::Variant;
 use super::variant_case::VariantCase;
-use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
@@ -54,23 +53,6 @@ impl Expression {
             Self::Variable(variable) => variable.find_variables(),
             Self::Variant(variant) => variant.find_variables(),
             Self::Primitive(_) | Self::String(_) => HashSet::new(),
-        }
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        match self {
-            Self::ArithmeticOperation(operation) => operation.infer_environment(variables).into(),
-            Self::Case(case) => case.infer_environment(variables).into(),
-            Self::ComparisonOperation(operation) => operation.infer_environment(variables).into(),
-            Self::FunctionApplication(function_application) => {
-                function_application.infer_environment(variables).into()
-            }
-            Self::LetRecursive(let_recursive) => let_recursive.infer_environment(variables).into(),
-            Self::Let(let_) => let_.infer_environment(variables).into(),
-            Self::Record(record) => record.infer_environment(variables).into(),
-            Self::RecordElement(element) => element.infer_environment(variables).into(),
-            Self::Variant(variant) => variant.infer_environment(variables).into(),
-            Self::Primitive(_) | Self::String(_) | Self::Variable(_) => self.clone(),
         }
     }
 }

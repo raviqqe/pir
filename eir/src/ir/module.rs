@@ -26,10 +26,7 @@ impl Module {
             foreign_declarations,
             foreign_definitions,
             declarations,
-            definitions: definitions
-                .iter()
-                .map(|definition| definition.infer_environment(&Default::default()))
-                .collect(),
+            definitions,
         }
     }
 

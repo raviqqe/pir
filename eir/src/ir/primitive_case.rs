@@ -1,7 +1,6 @@
 use super::expression::Expression;
 use super::primitive_alternative::PrimitiveAlternative;
-use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -50,20 +49,5 @@ impl PrimitiveCase {
         }
 
         variables
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self {
-            argument: self.argument.infer_environment(variables).into(),
-            alternatives: self
-                .alternatives
-                .iter()
-                .map(|alternative| alternative.infer_environment(variables))
-                .collect(),
-            default_alternative: self
-                .default_alternative
-                .as_ref()
-                .map(|expression| expression.infer_environment(variables).into()),
-        }
     }
 }

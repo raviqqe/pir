@@ -1,7 +1,7 @@
 use super::argument::Argument;
 use super::expression::Expression;
 use crate::types::{self, Type};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Definition {
@@ -110,109 +110,5 @@ impl Definition {
         }
 
         variables
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        // Do not include this function itself in variables as it can be global.
-
-        Self::with_options(
-            self.name.clone(),
-            self.body
-                .find_variables()
-                .iter()
-                .filter_map(|name| {
-                    variables
-                        .get(name)
-                        .map(|type_| Argument::new(name, type_.clone()))
-                })
-                .collect(),
-            self.arguments.clone(),
-            {
-                let mut variables = variables.clone();
-
-                for argument in &self.arguments {
-                    variables.insert(argument.name().into(), argument.type_().clone());
-                }
-
-                self.body.infer_environment(&variables)
-            },
-            self.result_type.clone(),
-            self.is_thunk,
-        )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ir::*;
-
-    #[test]
-    fn infer_empty_environment() {
-        assert_eq!(
-            Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                42.0,
-                types::Primitive::Float64
-            )
-            .infer_environment(&Default::default()),
-            Definition::with_environment(
-                "f",
-                vec![],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                42.0,
-                types::Primitive::Float64
-            )
-        );
-    }
-
-    #[test]
-    fn infer_environment() {
-        assert_eq!(
-            Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Variable::new("y"),
-                types::Primitive::Float64
-            )
-            .infer_environment(
-                &vec![("y".into(), types::Primitive::Float64.into())]
-                    .drain(..)
-                    .collect()
-            ),
-            Definition::with_environment(
-                "f",
-                vec![Argument::new("y", types::Primitive::Float64)],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Variable::new("y"),
-                types::Primitive::Float64
-            )
-        );
-    }
-
-    #[test]
-    fn infer_environment_idempotently() {
-        let variables = vec![("y".into(), types::Primitive::Float64.into())]
-            .drain(..)
-            .collect();
-
-        assert_eq!(
-            Definition::new(
-                "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Variable::new("y"),
-                types::Primitive::Float64
-            )
-            .infer_environment(&variables)
-            .infer_environment(&variables),
-            Definition::with_environment(
-                "f",
-                vec![Argument::new("y", types::Primitive::Float64)],
-                vec![Argument::new("x", types::Primitive::Float64)],
-                Variable::new("y"),
-                types::Primitive::Float64
-            )
-        );
     }
 }

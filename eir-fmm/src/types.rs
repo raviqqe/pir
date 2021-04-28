@@ -2,10 +2,6 @@ use std::collections::HashMap;
 
 pub const FUNCTION_ARGUMENT_OFFSET: usize = 1;
 
-pub fn compile_generic_pointer() -> fmm::types::Pointer {
-    fmm::types::Pointer::new(fmm::types::Primitive::Integer8)
-}
-
 pub fn get_arity(type_: &fmm::types::Function) -> usize {
     type_.arguments().len() - FUNCTION_ARGUMENT_OFFSET
 }
@@ -28,12 +24,7 @@ pub fn compile(
 pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type {
     match primitive {
         eir::types::Primitive::Boolean => fmm::types::Primitive::Boolean.into(),
-        eir::types::Primitive::Float32 => fmm::types::Primitive::Float32.into(),
-        eir::types::Primitive::Float64 => fmm::types::Primitive::Float64.into(),
-        eir::types::Primitive::Integer8 => fmm::types::Primitive::Integer8.into(),
-        eir::types::Primitive::Integer32 => fmm::types::Primitive::Integer32.into(),
-        eir::types::Primitive::Integer64 => fmm::types::Primitive::Integer64.into(),
-        eir::types::Primitive::Pointer => compile_generic_pointer().into(),
+        eir::types::Primitive::Number => fmm::types::Primitive::Float64.into(),
     }
 }
 

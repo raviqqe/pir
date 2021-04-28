@@ -1,9 +1,6 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::{
-    collections::{HashMap, HashSet},
-    sync::Arc,
-};
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Variant {
@@ -29,12 +26,5 @@ impl Variant {
 
     pub(crate) fn find_variables(&self) -> HashSet<String> {
         self.payload.find_variables()
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self::new(
-            self.type_.clone(),
-            self.payload.infer_environment(variables),
-        )
     }
 }

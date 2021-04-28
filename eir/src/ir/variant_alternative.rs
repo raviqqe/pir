@@ -1,6 +1,6 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariantAlternative {
@@ -40,17 +40,5 @@ impl VariantAlternative {
         variables.remove(&self.name);
 
         variables
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        let mut variables = variables.clone();
-
-        variables.insert(self.name.clone(), self.type_.clone());
-
-        Self {
-            type_: self.type_.clone(),
-            name: self.name.clone(),
-            expression: self.expression.infer_environment(&variables),
-        }
     }
 }

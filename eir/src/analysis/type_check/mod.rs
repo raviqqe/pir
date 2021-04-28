@@ -128,7 +128,7 @@ fn check_expression(
 
             check_expression(let_.expression(), &variables)?
         }
-        Expression::Primitive(primitive) => Ok(check_primitive(primitive).into())?,
+        Expression::Primitive(primitive) => Ok(check_primitive(*primitive).into())?,
         Expression::Record(record) => {
             let record_type = types
                 .get(record.type_().name())
@@ -253,14 +253,10 @@ fn check_case(
     }
 }
 
-fn check_primitive(primitive: &Primitive) -> types::Primitive {
+fn check_primitive(primitive: Primitive) -> types::Primitive {
     match primitive {
         Primitive::Boolean(_) => types::Primitive::Boolean,
-        Primitive::Float32(_) => types::Primitive::Float32,
-        Primitive::Float64(_) => types::Primitive::Float64,
-        Primitive::Integer8(_) => types::Primitive::Integer8,
-        Primitive::Integer32(_) => types::Primitive::Integer32,
-        Primitive::Integer64(_) => types::Primitive::Integer64,
+        Primitive::Number(_) => types::Primitive::Number,
     }
 }
 
@@ -312,9 +308,9 @@ mod tests {
     fn check_types_of_variables() {
         let module = create_module_from_definitions(vec![Definition::new(
             "f",
-            vec![Argument::new("x", types::Primitive::Float64)],
+            vec![Argument::new("x", types::Primitive::Number)],
             Variable::new("x"),
-            types::Primitive::Float64,
+            types::Primitive::Number,
         )]);
         assert_eq!(check_types(&module), Ok(()));
     }
@@ -324,15 +320,15 @@ mod tests {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 42.0,
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
             Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 Variable::new("f"),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
         ]);
 
@@ -346,9 +342,9 @@ mod tests {
     fn check_types_of_functions() {
         let module = create_module_from_definitions(vec![Definition::new(
             "f",
-            vec![Argument::new("x", types::Primitive::Float64)],
+            vec![Argument::new("x", types::Primitive::Number)],
             42.0,
-            types::Primitive::Float64,
+            types::Primitive::Number,
         )]);
 
         assert_eq!(check_types(&module), Ok(()));
@@ -359,15 +355,15 @@ mod tests {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 42.0,
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
             Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 Variable::new("f"),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
         ]);
 
@@ -382,15 +378,15 @@ mod tests {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 42.0,
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
             Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 FunctionApplication::new(Variable::new("f"), 42.0),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
         ]);
 
@@ -402,15 +398,15 @@ mod tests {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 42.0,
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
             Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 FunctionApplication::new(FunctionApplication::new(Variable::new("f"), 42.0), 42.0),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
         ]);
 
@@ -424,9 +420,9 @@ mod tests {
     fn fail_to_check_types_because_of_missing_variables() {
         let module = create_module_from_definitions(vec![Definition::new(
             "f",
-            vec![Argument::new("x", types::Primitive::Float64)],
+            vec![Argument::new("x", types::Primitive::Number)],
             Variable::new("y"),
-            types::Primitive::Float64,
+            types::Primitive::Number,
         )]);
 
         assert!(matches!(
@@ -439,19 +435,19 @@ mod tests {
     fn check_types_of_nested_let_expressions() {
         let module = create_module_from_definitions(vec![Definition::new(
             "f",
-            vec![Argument::new("x", types::Primitive::Float64)],
+            vec![Argument::new("x", types::Primitive::Number)],
             Let::new(
                 "y",
-                types::Primitive::Float64,
+                types::Primitive::Number,
                 42.0,
                 Let::new(
                     "z",
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                     Variable::new("y"),
                     Variable::new("z"),
                 ),
             ),
-            types::Primitive::Float64,
+            types::Primitive::Number,
         )]);
 
         assert_eq!(check_types(&module), Ok(()));
@@ -462,20 +458,20 @@ mod tests {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 42.0,
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
             Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 Let::new(
                     "y",
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                     Variable::new("f"),
                     Variable::new("y"),
                 ),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             ),
         ]);
 
@@ -493,13 +489,13 @@ mod tests {
             vec![],
             vec![Declaration::new(
                 "f",
-                types::Function::new(types::Primitive::Float64, types::Primitive::Float64),
+                types::Function::new(types::Primitive::Number, types::Primitive::Number),
             )],
             vec![Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 FunctionApplication::new(Variable::new("f"), Variable::new("x")),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             )],
         );
         assert_eq!(check_types(&module), Ok(()));
@@ -513,13 +509,13 @@ mod tests {
             vec![],
             vec![Declaration::new(
                 "f",
-                types::Function::new(types::Primitive::Float64, types::Primitive::Float64),
+                types::Function::new(types::Primitive::Number, types::Primitive::Number),
             )],
             vec![Definition::new(
                 "g",
-                vec![Argument::new("x", types::Primitive::Float64)],
+                vec![Argument::new("x", types::Primitive::Number)],
                 Variable::new("f"),
-                types::Primitive::Float64,
+                types::Primitive::Number,
             )],
         );
 
@@ -542,7 +538,7 @@ mod tests {
                         "f",
                         vec![Argument::new("x", Type::Variant)],
                         VariantCase::new(Variable::new("x"), vec![], Some(42.0.into()),),
-                        types::Primitive::Float64,
+                        types::Primitive::Number,
                     )])),
                     Ok(())
                 );
@@ -557,13 +553,13 @@ mod tests {
                         VariantCase::new(
                             Variable::new("x"),
                             vec![VariantAlternative::new(
-                                types::Primitive::Float64,
+                                types::Primitive::Number,
                                 "y",
                                 Variable::new("y")
                             )],
                             None
                         ),
-                        types::Primitive::Float64,
+                        types::Primitive::Number,
                     )])),
                     Ok(())
                 );
@@ -575,7 +571,7 @@ mod tests {
                     "f",
                     vec![Argument::new("x", Type::Variant)],
                     VariantCase::new(Variable::new("x"), vec![], None),
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                 )]);
 
                 assert!(matches!(
@@ -594,15 +590,15 @@ mod tests {
                         Variable::new("x"),
                         vec![
                             VariantAlternative::new(
-                                types::Primitive::Integer64,
+                                types::Primitive::Boolean,
                                 "x",
                                 Variable::new("x"),
                             ),
-                            VariantAlternative::new(types::Primitive::Float64, "x", 42.0),
+                            VariantAlternative::new(types::Primitive::Number, "x", 42.0),
                         ],
                         None,
                     ),
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                 )]);
 
                 assert!(matches!(
@@ -646,9 +642,9 @@ mod tests {
                         Definition::with_environment(
                             "f",
                             vec![],
-                            vec![Argument::new("x", types::Primitive::Float64)],
+                            vec![Argument::new("x", types::Primitive::Number)],
                             PrimitiveCase::new(42.0, vec![], Some(42.0.into()),),
-                            types::Primitive::Float64,
+                            types::Primitive::Number,
                         )
                     ])),
                     Ok(())
@@ -662,13 +658,13 @@ mod tests {
                         Definition::with_environment(
                             "f",
                             vec![],
-                            vec![Argument::new("x", types::Primitive::Float64)],
+                            vec![Argument::new("x", types::Primitive::Number)],
                             PrimitiveCase::new(
                                 42.0,
                                 vec![PrimitiveAlternative::new(42.0, 42.0)],
                                 None
                             ),
-                            types::Primitive::Float64,
+                            types::Primitive::Number,
                         )
                     ],)),
                     Ok(())
@@ -682,13 +678,13 @@ mod tests {
                         Definition::with_environment(
                             "f",
                             vec![],
-                            vec![Argument::new("x", types::Primitive::Float64)],
+                            vec![Argument::new("x", types::Primitive::Number)],
                             PrimitiveCase::new(
                                 42.0,
                                 vec![PrimitiveAlternative::new(42.0, 42.0)],
                                 Some(42.0.into())
                             ),
-                            types::Primitive::Float64,
+                            types::Primitive::Number,
                         )
                     ],)),
                     Ok(())
@@ -702,13 +698,13 @@ mod tests {
                         Definition::with_environment(
                             "f",
                             vec![],
-                            vec![Argument::new("x", types::Primitive::Float64)],
+                            vec![Argument::new("x", types::Primitive::Number)],
                             PrimitiveCase::new(
                                 42.0,
-                                vec![PrimitiveAlternative::new(42, 42.0)],
+                                vec![PrimitiveAlternative::new(true, 42.0)],
                                 Some(42.0.into())
                             ),
-                            types::Primitive::Float64,
+                            types::Primitive::Number,
                         )
                     ],)),
                     Err(TypeCheckError::TypesNotMatched(_, _))
@@ -730,7 +726,7 @@ mod tests {
                     vec![Definition::with_environment(
                         "f",
                         vec![],
-                        vec![Argument::new("x", types::Primitive::Float64)],
+                        vec![Argument::new("x", types::Primitive::Number)],
                         Record::new(reference_type.clone(), vec![]),
                         reference_type,
                     )],
@@ -747,12 +743,12 @@ mod tests {
                 check_types(&create_module_with_records(
                     vec![TypeDefinition::new(
                         "foo",
-                        types::Record::new(vec![types::Primitive::Float64.into()])
+                        types::Record::new(vec![types::Primitive::Number.into()])
                     )],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
-                        vec![Argument::new("x", types::Primitive::Float64)],
+                        vec![Argument::new("x", types::Primitive::Number)],
                         Record::new(reference_type.clone(), vec![42.0.into()],),
                         reference_type,
                     )],
@@ -768,12 +764,12 @@ mod tests {
             let module = create_module_with_records(
                 vec![TypeDefinition::new(
                     "foo",
-                    types::Record::new(vec![types::Primitive::Float64.into()]),
+                    types::Record::new(vec![types::Primitive::Number.into()]),
                 )],
                 vec![Definition::with_environment(
                     "f",
                     vec![],
-                    vec![Argument::new("x", types::Primitive::Float64)],
+                    vec![Argument::new("x", types::Primitive::Number)],
                     Record::new(reference_type.clone(), vec![42.0.into(), 42.0.into()]),
                     reference_type,
                 )],
@@ -792,12 +788,12 @@ mod tests {
             let module = create_module_with_records(
                 vec![TypeDefinition::new(
                     "foo",
-                    types::Record::new(vec![types::Primitive::Float64.into()]),
+                    types::Record::new(vec![types::Primitive::Number.into()]),
                 )],
                 vec![Definition::with_environment(
                     "f",
                     vec![],
-                    vec![Argument::new("x", types::Primitive::Float64)],
+                    vec![Argument::new("x", types::Primitive::Number)],
                     Record::new(reference_type.clone(), vec![true.into()]),
                     reference_type,
                 )],
@@ -817,18 +813,18 @@ mod tests {
                 check_types(&create_module_with_records(
                     vec![TypeDefinition::new(
                         "foo",
-                        types::Record::new(vec![types::Primitive::Float64.into()])
+                        types::Record::new(vec![types::Primitive::Number.into()])
                     )],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
-                        vec![Argument::new("x", types::Primitive::Float64)],
+                        vec![Argument::new("x", types::Primitive::Number)],
                         RecordElement::new(
                             reference_type.clone(),
                             0,
                             Record::new(reference_type, vec![42.0.into()],)
                         ),
-                        types::Primitive::Float64
+                        types::Primitive::Number
                     )],
                 )),
                 Ok(())
@@ -846,8 +842,8 @@ mod tests {
                     Definition::with_environment(
                         "f",
                         vec![],
-                        vec![Argument::new("x", types::Primitive::Float64)],
-                        Variant::new(types::Primitive::Float64, Primitive::Float64(42.0),),
+                        vec![Argument::new("x", types::Primitive::Number)],
+                        Variant::new(types::Primitive::Number, Primitive::Number(42.0),),
                         Type::Variant
                     )
                 ],)),
@@ -877,9 +873,9 @@ mod tests {
         let module = create_module_from_definitions(vec![Definition::with_environment(
             "f",
             vec![],
-            vec![Argument::new("x", types::Primitive::Float64)],
+            vec![Argument::new("x", types::Primitive::Number)],
             ArithmeticOperation::new(ArithmeticOperator::Add, 42.0, 42.0),
-            types::Primitive::Float64,
+            types::Primitive::Number,
         )]);
         assert_eq!(check_types(&module), Ok(()));
     }
@@ -889,7 +885,7 @@ mod tests {
         let module = create_module_from_definitions(vec![Definition::with_environment(
             "f",
             vec![],
-            vec![Argument::new("x", types::Primitive::Float64)],
+            vec![Argument::new("x", types::Primitive::Number)],
             ComparisonOperation::new(ComparisonOperator::Equal, 42.0, 42.0),
             types::Primitive::Boolean,
         )]);
@@ -906,16 +902,16 @@ mod tests {
                 vec![ForeignDeclaration::new(
                     "f",
                     "g",
-                    types::Function::new(types::Primitive::Float64, types::Primitive::Float64),
+                    types::Function::new(types::Primitive::Number, types::Primitive::Number),
                     CallingConvention::Target,
                 )],
                 vec![],
                 vec![],
                 vec![Definition::new(
                     "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
+                    vec![Argument::new("x", types::Primitive::Number)],
                     FunctionApplication::new(Variable::new("f"), Variable::new("x")),
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                 )],
             );
             assert_eq!(check_types(&module), Ok(()));
@@ -928,16 +924,16 @@ mod tests {
                 vec![ForeignDeclaration::new(
                     "f",
                     "g",
-                    types::Function::new(types::Primitive::Float64, types::Primitive::Float64),
+                    types::Function::new(types::Primitive::Number, types::Primitive::Number),
                     CallingConvention::Target,
                 )],
                 vec![],
                 vec![],
                 vec![Definition::new(
                     "g",
-                    vec![Argument::new("x", types::Primitive::Float64)],
+                    vec![Argument::new("x", types::Primitive::Number)],
                     Variable::new("f"),
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                 )],
             );
 
@@ -959,7 +955,7 @@ mod tests {
                 vec![ForeignDefinition::new("f", "g")],
                 vec![Declaration::new(
                     "f",
-                    types::Function::new(types::Primitive::Float64, types::Primitive::Float64),
+                    types::Function::new(types::Primitive::Number, types::Primitive::Number),
                 )],
                 vec![],
             );
@@ -976,9 +972,9 @@ mod tests {
                 vec![],
                 vec![Definition::new(
                     "f",
-                    vec![Argument::new("x", types::Primitive::Float64)],
+                    vec![Argument::new("x", types::Primitive::Number)],
                     Variable::new("x"),
-                    types::Primitive::Float64,
+                    types::Primitive::Number,
                 )],
             );
 

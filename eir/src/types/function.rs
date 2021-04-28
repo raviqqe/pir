@@ -54,38 +54,38 @@ mod tests {
     #[test]
     fn argument() {
         assert_eq!(
-            Function::new(Primitive::Float64, Primitive::Float64).argument(),
-            &Primitive::Float64.into()
+            Function::new(Primitive::Number, Primitive::Number).argument(),
+            &Primitive::Number.into()
         );
     }
 
     #[test]
     fn result() {
         assert_eq!(
-            Function::new(Primitive::Float64, Primitive::Float64).result(),
-            &Primitive::Float64.into()
+            Function::new(Primitive::Number, Primitive::Number).result(),
+            &Primitive::Number.into()
         );
     }
 
     #[test]
     fn arguments() {
         assert_eq!(
-            Function::new(Primitive::Float64, Primitive::Float64,)
+            Function::new(Primitive::Number, Primitive::Number,)
                 .arguments()
                 .into_iter()
                 .collect::<Vec<&Type>>(),
-            vec![&Primitive::Float64.into()]
+            vec![&Primitive::Number.into()]
         );
 
         assert_eq!(
             Function::new(
-                Primitive::Float64,
-                Function::new(Primitive::Float64, Primitive::Float64)
+                Primitive::Number,
+                Function::new(Primitive::Number, Primitive::Number)
             )
             .arguments()
             .into_iter()
             .collect::<Vec<&Type>>(),
-            vec![&Primitive::Float64.into(), &Primitive::Float64.into()]
+            vec![&Primitive::Number.into(), &Primitive::Number.into()]
         );
     }
 
@@ -93,11 +93,11 @@ mod tests {
     fn last_result() {
         assert_eq!(
             Function::new(
-                Primitive::Float64,
-                Function::new(Primitive::Float64, Primitive::Float64)
+                Primitive::Number,
+                Function::new(Primitive::Number, Primitive::Number)
             )
             .last_result(),
-            &Primitive::Float64.into()
+            &Primitive::Number.into()
         );
     }
 }

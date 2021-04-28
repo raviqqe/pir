@@ -1,7 +1,6 @@
 use super::expression::Expression;
 use super::primitive::Primitive;
-use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveAlternative {
@@ -17,8 +16,8 @@ impl PrimitiveAlternative {
         }
     }
 
-    pub fn primitive(&self) -> &Primitive {
-        &self.primitive
+    pub fn primitive(&self) -> Primitive {
+        self.primitive
     }
 
     pub fn expression(&self) -> &Expression {
@@ -27,12 +26,5 @@ impl PrimitiveAlternative {
 
     pub(crate) fn find_variables(&self) -> HashSet<String> {
         self.expression.find_variables()
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self {
-            primitive: self.primitive,
-            expression: self.expression.infer_environment(variables),
-        }
     }
 }

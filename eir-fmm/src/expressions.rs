@@ -67,7 +67,7 @@ pub fn compile(
             variables,
             types,
         )?,
-        eir::ir::Expression::Primitive(primitive) => compile_primitive(primitive).into(),
+        eir::ir::Expression::Primitive(primitive) => compile_primitive(*primitive).into(),
         eir::ir::Expression::Record(record) => {
             let unboxed = fmm::build::record(
                 record
@@ -110,19 +110,15 @@ pub fn compile(
             types::compile_string(),
             module_builder.define_anonymous_variable(
                 fmm::build::record(
-                    vec![
-                        fmm::ir::Primitive::PointerInteger(string.value().as_bytes().len() as i64)
-                            .into(),
-                    ]
-                    .into_iter()
-                    .chain(
-                        string
-                            .value()
-                            .as_bytes()
-                            .iter()
-                            .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
-                    )
-                    .collect(),
+                    vec![fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into()]
+                        .into_iter()
+                        .chain(
+                            string
+                                .value()
+                                .iter()
+                                .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
+                        )
+                        .collect(),
                 ),
                 false,
             ),
@@ -515,13 +511,9 @@ fn compile_comparison_operation(
     )
 }
 
-fn compile_primitive(primitive: &eir::ir::Primitive) -> fmm::ir::Primitive {
+fn compile_primitive(primitive: eir::ir::Primitive) -> fmm::ir::Primitive {
     match primitive {
-        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(*boolean),
-        eir::ir::Primitive::Float32(number) => fmm::ir::Primitive::Float32(*number),
-        eir::ir::Primitive::Float64(number) => fmm::ir::Primitive::Float64(*number),
-        eir::ir::Primitive::Integer8(number) => fmm::ir::Primitive::Integer8(*number),
-        eir::ir::Primitive::Integer32(number) => fmm::ir::Primitive::Integer32(*number),
-        eir::ir::Primitive::Integer64(number) => fmm::ir::Primitive::Integer64(*number),
+        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(boolean),
+        eir::ir::Primitive::Number(number) => fmm::ir::Primitive::Float64(number),
     }
 }

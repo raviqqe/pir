@@ -1,7 +1,6 @@
 use super::definition::Definition;
 use super::expression::Expression;
-use crate::types::Type;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,21 +37,5 @@ impl LetRecursive {
         }
 
         variables
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        let mut variables = variables.clone();
-
-        for definition in &self.definitions {
-            variables.insert(definition.name().into(), definition.type_().clone().into());
-        }
-
-        Self::new(
-            self.definitions
-                .iter()
-                .map(|definition| definition.infer_environment(&variables))
-                .collect(),
-            self.expression.infer_environment(&variables),
-        )
     }
 }

@@ -1,6 +1,6 @@
 use super::expression::Expression;
-use crate::types::{self, Type};
-use std::collections::{HashMap, HashSet};
+use crate::types;
+use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Record {
@@ -26,15 +26,5 @@ impl Record {
             .iter()
             .flat_map(|element| element.find_variables())
             .collect()
-    }
-
-    pub(crate) fn infer_environment(&self, variables: &HashMap<String, Type>) -> Self {
-        Self::new(
-            self.type_.clone(),
-            self.elements
-                .iter()
-                .map(|element| element.infer_environment(variables))
-                .collect(),
-        )
     }
 }
