@@ -889,7 +889,7 @@ mod tests {
                                 ),
                                 true,
                             ),
-                            eir::ir::EirString::new("foo".into()),
+                            eir::ir::EirString::new("foo"),
                         ),
                         eir::types::Primitive::Number,
                     ),

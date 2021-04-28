@@ -4,8 +4,10 @@ pub struct EirString {
 }
 
 impl EirString {
-    pub fn new(value: Vec<u8>) -> Self {
-        Self { value }
+    pub fn new(value: impl Into<Vec<u8>>) -> Self {
+        Self {
+            value: value.into(),
+        }
     }
 
     pub fn value(&self) -> &[u8] {
