@@ -15,6 +15,13 @@ eir = { git = "https://github.com/ein-lang/eir", branch = "master" }
 eir-fmm = { git = "https://github.com/ein-lang/eir", branch = "master" }
 ```
 
+## Features
+
+- Currying
+- Nominal typing
+- Open variant type
+- Foreign function interface
+
 ## License
 
 [Apache 2.0](LICENSE)
