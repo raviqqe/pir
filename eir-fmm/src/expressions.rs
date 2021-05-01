@@ -107,7 +107,6 @@ pub fn compile(
             )?
         }
         eir::ir::Expression::String(string) => fmm::build::record(vec![
-            fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
                 module_builder.define_anonymous_variable(
@@ -122,6 +121,7 @@ pub fn compile(
                 ),
             )
             .into(),
+            fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
         ])
         .into(),
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
