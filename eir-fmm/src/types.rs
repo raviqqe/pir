@@ -28,8 +28,11 @@ pub fn compile_primitive(primitive: &eir::types::Primitive) -> fmm::types::Type 
     }
 }
 
-pub fn compile_string() -> fmm::types::Pointer {
-    fmm::types::Pointer::new(fmm::types::Record::new(vec![]))
+pub fn compile_string() -> fmm::types::Record {
+    fmm::types::Record::new(vec![
+        fmm::types::Primitive::PointerInteger.into(),
+        fmm::types::Pointer::new(fmm::types::Primitive::Integer8).into(),
+    ])
 }
 
 fn compile_variant() -> fmm::types::Record {

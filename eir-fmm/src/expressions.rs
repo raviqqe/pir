@@ -106,31 +106,31 @@ pub fn compile(
                 element.index(),
             )?
         }
-        eir::ir::Expression::String(string) => fmm::build::bit_cast(
-            types::compile_string(),
-            module_builder.define_anonymous_variable(
-                fmm::build::record(
-                    vec![fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into()]
-                        .into_iter()
-                        .chain(
-                            string
-                                .value()
-                                .iter()
-                                .map(|&byte| fmm::ir::Primitive::Integer8(byte).into()),
-                        )
-                        .collect(),
+        eir::ir::Expression::String(string) => fmm::build::record(vec![
+            fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
+            fmm::build::bit_cast(
+                fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
+                module_builder.define_anonymous_variable(
+                    fmm::build::record(
+                        string
+                            .value()
+                            .iter()
+                            .map(|&byte| fmm::ir::Primitive::Integer8(byte).into())
+                            .collect(),
+                    ),
+                    false,
                 ),
-                false,
-            ),
-        )
+            )
+            .into(),
+        ])
         .into(),
         eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
         eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
             compile_variant_tag(variant.type_()),
-            compile_payload_bit_cast(
+            compile_boxed_payload(
                 instruction_builder,
-                types::compile_variant_payload(),
-                compile(variant.payload(), variables)?,
+                &compile(variant.payload(), variables)?,
+                variant.type_(),
             )?,
         ])
         .into(),
@@ -224,10 +224,11 @@ fn compile_variant_alternatives(
                         .into_iter()
                         .chain(vec![(
                             alternative.name().into(),
-                            compile_payload_bit_cast(
+                            compile_unboxed_payload(
                                 &instruction_builder,
-                                types::compile(alternative.type_(), types),
-                                instruction_builder.deconstruct_record(argument.clone(), 1)?,
+                                &instruction_builder.deconstruct_record(argument.clone(), 1)?,
+                                alternative.type_(),
+                                types,
                             )?,
                         )])
                         .collect(),
@@ -259,7 +260,48 @@ fn compile_variant_tag(type_: &eir::types::Type) -> fmm::build::TypedExpression 
     fmm::build::variable(types::compile_type_id(type_), types::compile_variant_tag())
 }
 
-fn compile_payload_bit_cast(
+fn compile_boxed_payload(
+    builder: &fmm::build::InstructionBuilder,
+    payload: &fmm::build::TypedExpression,
+    variant_type: &eir::types::Type,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    compile_union_bit_cast(
+        builder,
+        types::compile_variant_payload(),
+        // Strings have two words.
+        if variant_type == &eir::types::Type::String {
+            let pointer = builder.allocate_heap(payload.type_().clone());
+
+            builder.store(payload.clone(), pointer.clone());
+
+            pointer
+        } else {
+            payload.clone()
+        },
+    )
+}
+
+fn compile_unboxed_payload(
+    builder: &fmm::build::InstructionBuilder,
+    payload: &fmm::build::TypedExpression,
+    variant_type: &eir::types::Type,
+    types: &HashMap<String, eir::types::Record>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    Ok(if variant_type == &eir::types::Type::String {
+        builder.load(fmm::build::bit_cast(
+            fmm::types::Pointer::new(types::compile(variant_type, types)),
+            payload.clone(),
+        ))?
+    } else {
+        compile_union_bit_cast(
+            builder,
+            types::compile(variant_type, types),
+            payload.clone(),
+        )?
+    })
+}
+
+fn compile_union_bit_cast(
     builder: &fmm::build::InstructionBuilder,
     to_type: impl Into<fmm::types::Type>,
     argument: impl Into<fmm::build::TypedExpression>,

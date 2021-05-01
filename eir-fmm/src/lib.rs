@@ -565,6 +565,26 @@ mod tests {
                     )],
                 ));
             }
+
+            #[test]
+            fn compile_with_string() {
+                compile_module(&create_module_with_definitions(vec![
+                    eir::ir::Definition::new(
+                        "f",
+                        vec![eir::ir::Argument::new("x", eir::types::Type::Variant)],
+                        eir::ir::VariantCase::new(
+                            eir::ir::Variable::new("x"),
+                            vec![eir::ir::VariantAlternative::new(
+                                eir::types::Type::String,
+                                "y",
+                                eir::ir::Variable::new("y"),
+                            )],
+                            None,
+                        ),
+                        eir::types::Type::String,
+                    ),
+                ]));
+            }
         }
 
         mod primitive_cases {
@@ -810,6 +830,22 @@ mod tests {
                                 reference_type,
                                 vec![eir::ir::Primitive::Number(42.0).into()],
                             ),
+                        ),
+                        eir::types::Type::Variant,
+                    )],
+                ));
+            }
+
+            #[test]
+            fn compile_with_string() {
+                compile_module(&create_module_with_type_definitions(
+                    vec![],
+                    vec![eir::ir::Definition::new(
+                        "f",
+                        vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
+                        eir::ir::Variant::new(
+                            eir::types::Type::String,
+                            eir::ir::EirString::new("foo"),
                         ),
                         eir::types::Type::Variant,
                     )],
