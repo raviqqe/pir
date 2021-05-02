@@ -1,7 +1,5 @@
-use super::expression::Expression;
-use super::primitive_alternative::PrimitiveAlternative;
-use std::collections::HashSet;
-use std::sync::Arc;
+use super::{expression::Expression, primitive_alternative::PrimitiveAlternative};
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveCase {

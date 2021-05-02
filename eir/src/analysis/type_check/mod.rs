@@ -1,7 +1,9 @@
 mod error;
 
-use crate::ir::*;
-use crate::types::{self, Type};
+use crate::{
+    ir::*,
+    types::{self, Type},
+};
 pub use error::TypeCheckError;
 use std::collections::*;
 
@@ -43,7 +45,7 @@ pub fn check_types(module: &Module) -> Result<(), TypeCheckError> {
 fn check_definition(
     definition: &Definition,
     variables: &HashMap<&str, Type>,
-    types: &HashMap<&str, &types::Record>,
+    types: &HashMap<&str, &types::RecordBody>,
 ) -> Result<(), TypeCheckError> {
     let mut variables = variables.clone();
 
@@ -64,7 +66,7 @@ fn check_definition(
 fn check_expression(
     expression: &Expression,
     variables: &HashMap<&str, Type>,
-    types: &HashMap<&str, &types::Record>,
+    types: &HashMap<&str, &types::RecordBody>,
 ) -> Result<Type, TypeCheckError> {
     let check_expression = |expression, variables| check_expression(expression, variables, types);
 
@@ -178,7 +180,7 @@ fn check_expression(
 fn check_case(
     case: &Case,
     variables: &HashMap<&str, Type>,
-    types: &HashMap<&str, &types::Record>,
+    types: &HashMap<&str, &types::RecordBody>,
 ) -> Result<Type, TypeCheckError> {
     let check_expression = |expression: &Expression, variables: &HashMap<&str, Type>| {
         check_expression(expression, variables, types)
@@ -280,10 +282,11 @@ fn check_equality(one: &Type, other: &Type) -> Result<(), TypeCheckError> {
 
 #[cfg(test)]
 mod tests {
-    use super::check_types;
-    use super::error::*;
-    use crate::ir::*;
-    use crate::types::{self, Type};
+    use super::{check_types, error::*};
+    use crate::{
+        ir::*,
+        types::{self, Type},
+    };
 
     fn create_module_from_definitions(definitions: Vec<Definition>) -> Module {
         Module::new(vec![], vec![], vec![], vec![], definitions)
@@ -618,13 +621,13 @@ mod tests {
                             VariantCase::new(
                                 Variable::new("x"),
                                 vec![VariantAlternative::new(
-                                    types::Reference::new("foo"),
+                                    types::Record::new("foo"),
                                     "y",
                                     Variable::new("y")
                                 )],
                                 None
                             ),
-                            types::Reference::new("bar"),
+                            types::Record::new("bar"),
                         )
                     ])),
                     Err(TypeCheckError::TypesNotMatched(_, _))
@@ -718,17 +721,17 @@ mod tests {
 
         #[test]
         fn check_records_with_no_element() {
-            let reference_type = types::Reference::new("foo");
+            let record_type = types::Record::new("foo");
 
             assert_eq!(
                 check_types(&create_module_with_records(
-                    vec![TypeDefinition::new("foo", types::Record::new(vec![]))],
+                    vec![TypeDefinition::new("foo", types::RecordBody::new(vec![]))],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Number)],
-                        Record::new(reference_type.clone(), vec![]),
-                        reference_type,
+                        Record::new(record_type.clone(), vec![]),
+                        record_type,
                     )],
                 )),
                 Ok(())
@@ -737,20 +740,20 @@ mod tests {
 
         #[test]
         fn check_records_with_elements() {
-            let reference_type = types::Reference::new("foo");
+            let record_type = types::Record::new("foo");
 
             assert_eq!(
                 check_types(&create_module_with_records(
                     vec![TypeDefinition::new(
                         "foo",
-                        types::Record::new(vec![types::Primitive::Number.into()])
+                        types::RecordBody::new(vec![types::Primitive::Number.into()])
                     )],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Number)],
-                        Record::new(reference_type.clone(), vec![42.0.into()],),
-                        reference_type,
+                        Record::new(record_type.clone(), vec![42.0.into()],),
+                        record_type,
                     )],
                 )),
                 Ok(())
@@ -759,19 +762,19 @@ mod tests {
 
         #[test]
         fn fail_to_check_records_with_wrong_number_of_elements() {
-            let reference_type = types::Reference::new("foo");
+            let record_type = types::Record::new("foo");
 
             let module = create_module_with_records(
                 vec![TypeDefinition::new(
                     "foo",
-                    types::Record::new(vec![types::Primitive::Number.into()]),
+                    types::RecordBody::new(vec![types::Primitive::Number.into()]),
                 )],
                 vec![Definition::with_environment(
                     "f",
                     vec![],
                     vec![Argument::new("x", types::Primitive::Number)],
-                    Record::new(reference_type.clone(), vec![42.0.into(), 42.0.into()]),
-                    reference_type,
+                    Record::new(record_type.clone(), vec![42.0.into(), 42.0.into()]),
+                    record_type,
                 )],
             );
 
@@ -783,19 +786,19 @@ mod tests {
 
         #[test]
         fn fail_to_check_records_with_wrong_element_type() {
-            let reference_type = types::Reference::new("foo");
+            let record_type = types::Record::new("foo");
 
             let module = create_module_with_records(
                 vec![TypeDefinition::new(
                     "foo",
-                    types::Record::new(vec![types::Primitive::Number.into()]),
+                    types::RecordBody::new(vec![types::Primitive::Number.into()]),
                 )],
                 vec![Definition::with_environment(
                     "f",
                     vec![],
                     vec![Argument::new("x", types::Primitive::Number)],
-                    Record::new(reference_type.clone(), vec![true.into()]),
-                    reference_type,
+                    Record::new(record_type.clone(), vec![true.into()]),
+                    record_type,
                 )],
             );
 
@@ -807,22 +810,22 @@ mod tests {
 
         #[test]
         fn check_record_element() {
-            let reference_type = types::Reference::new("foo");
+            let record_type = types::Record::new("foo");
 
             assert_eq!(
                 check_types(&create_module_with_records(
                     vec![TypeDefinition::new(
                         "foo",
-                        types::Record::new(vec![types::Primitive::Number.into()])
+                        types::RecordBody::new(vec![types::Primitive::Number.into()])
                     )],
                     vec![Definition::with_environment(
                         "f",
                         vec![],
                         vec![Argument::new("x", types::Primitive::Number)],
                         RecordElement::new(
-                            reference_type.clone(),
+                            record_type.clone(),
                             0,
-                            Record::new(reference_type, vec![42.0.into()],)
+                            Record::new(record_type, vec![42.0.into()],)
                         ),
                         types::Primitive::Number
                     )],

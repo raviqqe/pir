@@ -1,7 +1,5 @@
-use super::expression::Expression;
-use super::variant_alternative::VariantAlternative;
-use std::collections::HashSet;
-use std::sync::Arc;
+use super::{expression::Expression, variant_alternative::VariantAlternative};
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariantCase {

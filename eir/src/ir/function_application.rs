@@ -1,6 +1,5 @@
 use super::expression::Expression;
-use std::collections::HashSet;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FunctionApplication {
@@ -59,8 +58,7 @@ impl FunctionApplication {
 
 #[cfg(test)]
 mod tests {
-    use super::super::variable::Variable;
-    use super::*;
+    use super::{super::variable::Variable, *};
 
     #[test]
     fn first_function() {

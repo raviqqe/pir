@@ -1,7 +1,5 @@
-use super::arithmetic_operator::ArithmeticOperator;
-use super::expression::Expression;
-use std::collections::HashSet;
-use std::sync::Arc;
+use super::{arithmetic_operator::ArithmeticOperator, expression::Expression};
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArithmeticOperation {

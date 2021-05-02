@@ -81,7 +81,7 @@ pub fn compile(module: &eir::ir::Module) -> Result<fmm::ir::Module, CompileError
 
 fn compile_global_variables(
     module: &eir::ir::Module,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordBody>,
 ) -> HashMap<String, fmm::build::TypedExpression> {
     module
         .foreign_declarations()
@@ -516,12 +516,12 @@ mod tests {
 
             #[test]
             fn compile_with_unboxed_record() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -529,25 +529,25 @@ mod tests {
                         eir::ir::VariantCase::new(
                             eir::ir::Variable::new("x"),
                             vec![eir::ir::VariantAlternative::new(
-                                reference_type.clone(),
+                                record_type.clone(),
                                 "x",
                                 eir::ir::Variable::new("x"),
                             )],
                             None,
                         ),
-                        reference_type,
+                        record_type,
                     )],
                 ));
             }
 
             #[test]
             fn compile_with_boxed_record() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
@@ -555,13 +555,13 @@ mod tests {
                         eir::ir::VariantCase::new(
                             eir::ir::Variable::new("x"),
                             vec![eir::ir::VariantAlternative::new(
-                                reference_type.clone(),
+                                record_type.clone(),
                                 "x",
                                 eir::ir::Variable::new("x"),
                             )],
                             None,
                         ),
-                        reference_type,
+                        record_type,
                     )],
                 ));
             }
@@ -647,51 +647,51 @@ mod tests {
 
             #[test]
             fn compile_with_no_element() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![]),
+                        eir::types::RecordBody::new(vec![]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::Record::new(reference_type.clone(), vec![]),
-                        reference_type,
+                        eir::ir::Record::new(record_type.clone(), vec![]),
+                        record_type,
                     )],
                 ));
             }
 
             #[test]
             fn compile_with_1_element() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Record::new(
-                            reference_type.clone(),
+                            record_type.clone(),
                             vec![eir::ir::Primitive::Number(42.0).into()],
                         ),
-                        reference_type,
+                        record_type,
                     )],
                 ));
             }
 
             #[test]
             fn compile_with_2_elements() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![
+                        eir::types::RecordBody::new(vec![
                             eir::types::Primitive::Number.into(),
                             eir::types::Primitive::Boolean.into(),
                         ]),
@@ -699,32 +699,29 @@ mod tests {
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
-                        eir::ir::Record::new(
-                            reference_type.clone(),
-                            vec![42.0.into(), true.into()],
-                        ),
-                        reference_type,
+                        eir::ir::Record::new(record_type.clone(), vec![42.0.into(), true.into()]),
+                        record_type,
                     )],
                 ));
             }
 
             #[test]
             fn compile_boxed() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
                         vec![eir::ir::Argument::new("x", eir::types::Primitive::Number)],
                         eir::ir::Record::new(
-                            reference_type.clone(),
+                            record_type.clone(),
                             vec![eir::ir::Primitive::Number(42.0).into()],
                         ),
-                        reference_type,
+                        record_type,
                     )],
                 ));
             }
@@ -735,17 +732,17 @@ mod tests {
 
             #[test]
             fn compile_with_1_element_record() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", reference_type.clone())],
-                        eir::ir::RecordElement::new(reference_type, 0, eir::ir::Variable::new("x")),
+                        vec![eir::ir::Argument::new("x", record_type.clone())],
+                        eir::ir::RecordElement::new(record_type, 0, eir::ir::Variable::new("x")),
                         eir::types::Primitive::Number,
                     )],
                 ));
@@ -753,20 +750,20 @@ mod tests {
 
             #[test]
             fn compile_with_2_element_record() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![
+                        eir::types::RecordBody::new(vec![
                             eir::types::Primitive::Boolean.into(),
                             eir::types::Primitive::Number.into(),
                         ]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", reference_type.clone())],
-                        eir::ir::RecordElement::new(reference_type, 1, eir::ir::Variable::new("x")),
+                        vec![eir::ir::Argument::new("x", record_type.clone())],
+                        eir::ir::RecordElement::new(record_type, 1, eir::ir::Variable::new("x")),
                         eir::types::Primitive::Number,
                     )],
                 ));
@@ -793,19 +790,19 @@ mod tests {
 
             #[test]
             fn compile_with_empty_unboxed_record() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![]),
+                        eir::types::RecordBody::new(vec![]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", reference_type.clone())],
+                        vec![eir::ir::Argument::new("x", record_type.clone())],
                         eir::ir::Variant::new(
-                            reference_type.clone(),
-                            eir::ir::Record::new(reference_type, vec![]),
+                            record_type.clone(),
+                            eir::ir::Record::new(record_type, vec![]),
                         ),
                         eir::types::Type::Variant,
                     )],
@@ -814,20 +811,20 @@ mod tests {
 
             #[test]
             fn compile_with_unboxed_record() {
-                let reference_type = eir::types::Reference::new("foo");
+                let record_type = eir::types::Record::new("foo");
 
                 compile_module(&create_module_with_type_definitions(
                     vec![eir::ir::TypeDefinition::new(
                         "foo",
-                        eir::types::Record::new(vec![eir::types::Primitive::Number.into()]),
+                        eir::types::RecordBody::new(vec![eir::types::Primitive::Number.into()]),
                     )],
                     vec![eir::ir::Definition::new(
                         "f",
-                        vec![eir::ir::Argument::new("x", reference_type.clone())],
+                        vec![eir::ir::Argument::new("x", record_type.clone())],
                         eir::ir::Variant::new(
-                            reference_type.clone(),
+                            record_type.clone(),
                             eir::ir::Record::new(
-                                reference_type,
+                                record_type,
                                 vec![eir::ir::Primitive::Number(42.0).into()],
                             ),
                         ),

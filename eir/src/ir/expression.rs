@@ -1,17 +1,10 @@
-use super::arithmetic_operation::ArithmeticOperation;
-use super::case::Case;
-use super::comparison_operation::ComparisonOperation;
-use super::function_application::FunctionApplication;
-use super::let_::Let;
-use super::let_recursive::LetRecursive;
-use super::primitive::Primitive;
-use super::primitive_case::PrimitiveCase;
-use super::record::Record;
-use super::record_element::RecordElement;
-use super::string::EirString;
-use super::variable::Variable;
-use super::variant::Variant;
-use super::variant_case::VariantCase;
+use super::{
+    arithmetic_operation::ArithmeticOperation, case::Case,
+    comparison_operation::ComparisonOperation, function_application::FunctionApplication,
+    let_::Let, let_recursive::LetRecursive, primitive::Primitive, primitive_case::PrimitiveCase,
+    record::Record, record_element::RecordElement, string::EirString, variable::Variable,
+    variant::Variant, variant_case::VariantCase,
+};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]

@@ -1,6 +1,4 @@
-use super::closures;
-use super::expressions;
-use super::types;
+use super::{closures, expressions, types};
 
 pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,

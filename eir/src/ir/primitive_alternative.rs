@@ -1,5 +1,4 @@
-use super::expression::Expression;
-use super::primitive::Primitive;
+use super::{expression::Expression, primitive::Primitive};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]

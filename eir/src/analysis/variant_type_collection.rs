@@ -1,5 +1,4 @@
-use crate::ir::*;
-use crate::types::Type;
+use crate::{ir::*, types::Type};
 use std::collections::*;
 
 pub fn collect_variant_types(module: &Module) -> HashSet<Type> {

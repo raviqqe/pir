@@ -1,5 +1,4 @@
-use crate::ir::*;
-use crate::types::Type;
+use crate::{ir::*, types::Type};
 use std::collections::HashMap;
 
 pub fn infer_environment(module: &Module) -> Module {

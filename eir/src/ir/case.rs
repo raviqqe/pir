@@ -1,5 +1,4 @@
-use super::primitive_case::PrimitiveCase;
-use super::variant_case::VariantCase;
+use super::{primitive_case::PrimitiveCase, variant_case::VariantCase};
 use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]

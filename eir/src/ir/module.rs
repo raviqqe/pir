@@ -1,8 +1,7 @@
-use super::declaration::Declaration;
-use super::definition::Definition;
-use super::foreign_declaration::ForeignDeclaration;
-use super::foreign_definition::ForeignDefinition;
-use super::type_definition::TypeDefinition;
+use super::{
+    declaration::Declaration, definition::Definition, foreign_declaration::ForeignDeclaration,
+    foreign_definition::ForeignDefinition, type_definition::TypeDefinition,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Module {

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub fn compile_declaration(
     module_builder: &fmm::build::ModuleBuilder,
     declaration: &eir::ir::Declaration,
-    types: &HashMap<String, eir::types::Record>,
+    types: &HashMap<String, eir::types::RecordBody>,
 ) {
     module_builder.declare_variable(
         declaration.name(),

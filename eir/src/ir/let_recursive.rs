@@ -1,7 +1,5 @@
-use super::definition::Definition;
-use super::expression::Expression;
-use std::collections::HashSet;
-use std::sync::Arc;
+use super::{definition::Definition, expression::Expression};
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct LetRecursive {

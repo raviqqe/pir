@@ -1,7 +1,6 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::collections::HashSet;
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Let {

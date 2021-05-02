@@ -1,7 +1,8 @@
-use crate::ir::*;
-use crate::types::{self, Type};
-use std::error::Error;
-use std::fmt::Display;
+use crate::{
+    ir::*,
+    types::{self, Type},
+};
+use std::{error::Error, fmt::Display};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TypeCheckError {
@@ -9,7 +10,7 @@ pub enum TypeCheckError {
     ForeignDefinitionNotFound(ForeignDefinition),
     FunctionExpected(Expression),
     NoAlternativeFound(Case),
-    TypeNotFound(types::Reference),
+    TypeNotFound(types::Record),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
     VariantInVariant(Variant),
