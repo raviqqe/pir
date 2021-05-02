@@ -1,6 +1,5 @@
 use super::expression::Expression;
 use crate::types;
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Record {
@@ -19,12 +18,5 @@ impl Record {
 
     pub fn elements(&self) -> &[Expression] {
         &self.elements
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.elements
-            .iter()
-            .flat_map(|element| element.find_variables())
-            .collect()
     }
 }

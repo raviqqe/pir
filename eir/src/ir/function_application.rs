@@ -1,5 +1,5 @@
 use super::expression::Expression;
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FunctionApplication {
@@ -45,14 +45,6 @@ impl FunctionApplication {
         arguments.reverse();
 
         arguments
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.function
-            .find_variables()
-            .into_iter()
-            .chain(self.argument.find_variables())
-            .collect()
     }
 }
 

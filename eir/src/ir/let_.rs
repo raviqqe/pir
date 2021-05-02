@@ -1,6 +1,6 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Let {
@@ -39,17 +39,5 @@ impl Let {
 
     pub fn expression(&self) -> &Expression {
         &self.expression
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.bound_expression
-            .find_variables()
-            .into_iter()
-            .chain({
-                let mut variables = self.expression.find_variables();
-                variables.remove(&self.name);
-                variables
-            })
-            .collect()
     }
 }

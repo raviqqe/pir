@@ -1,5 +1,5 @@
 use super::{arithmetic_operator::ArithmeticOperator, expression::Expression};
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ArithmeticOperation {
@@ -31,13 +31,5 @@ impl ArithmeticOperation {
 
     pub fn rhs(&self) -> &Expression {
         &self.rhs
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.lhs
-            .find_variables()
-            .into_iter()
-            .chain(self.rhs.find_variables())
-            .collect()
     }
 }

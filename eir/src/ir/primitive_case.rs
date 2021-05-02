@@ -1,5 +1,5 @@
 use super::{expression::Expression, primitive_alternative::PrimitiveAlternative};
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveCase {
@@ -33,19 +33,5 @@ impl PrimitiveCase {
         self.default_alternative
             .as_ref()
             .map(|expression| expression.as_ref())
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        let mut variables = self.argument.find_variables();
-
-        for alternative in &self.alternatives {
-            variables.extend(alternative.find_variables());
-        }
-
-        if let Some(default_alternative) = &self.default_alternative {
-            variables.extend(default_alternative.find_variables());
-        }
-
-        variables
     }
 }

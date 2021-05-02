@@ -5,7 +5,6 @@ use super::{
     record::Record, record_element::RecordElement, string::EirString, variable::Variable,
     variant::Variant, variant_case::VariantCase,
 };
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
@@ -28,24 +27,6 @@ impl Expression {
         match self {
             Self::Variable(variable) => Some(variable),
             _ => None,
-        }
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        match self {
-            Self::ArithmeticOperation(operation) => operation.find_variables(),
-            Self::Case(case) => case.find_variables(),
-            Self::ComparisonOperation(operation) => operation.find_variables(),
-            Self::FunctionApplication(function_application) => {
-                function_application.find_variables()
-            }
-            Self::LetRecursive(let_recursive) => let_recursive.find_variables(),
-            Self::Let(let_) => let_.find_variables(),
-            Self::Record(record) => record.find_variables(),
-            Self::RecordElement(element) => element.find_variables(),
-            Self::Variable(variable) => variable.find_variables(),
-            Self::Variant(variant) => variant.find_variables(),
-            Self::Primitive(_) | Self::String(_) => HashSet::new(),
         }
     }
 }

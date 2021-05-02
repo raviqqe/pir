@@ -1,5 +1,5 @@
 use super::{comparison_operator::ComparisonOperator, expression::Expression};
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ComparisonOperation {
@@ -31,13 +31,5 @@ impl ComparisonOperation {
 
     pub fn rhs(&self) -> &Expression {
         &self.rhs
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.lhs
-            .find_variables()
-            .into_iter()
-            .chain(self.rhs.find_variables())
-            .collect()
     }
 }

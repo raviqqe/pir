@@ -1,6 +1,5 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariantAlternative {
@@ -32,13 +31,5 @@ impl VariantAlternative {
 
     pub fn expression(&self) -> &Expression {
         &self.expression
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        let mut variables = self.expression.find_variables();
-
-        variables.remove(&self.name);
-
-        variables
     }
 }

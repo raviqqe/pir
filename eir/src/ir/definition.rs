@@ -1,6 +1,5 @@
 use super::{argument::Argument, expression::Expression};
 use crate::types::{self, Type};
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Definition {
@@ -97,17 +96,5 @@ impl Definition {
 
     pub fn is_thunk(&self) -> bool {
         self.is_thunk
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        let mut variables = self.body.find_variables();
-
-        variables.remove(&self.name);
-
-        for argument in &self.arguments {
-            variables.remove(argument.name());
-        }
-
-        variables
     }
 }

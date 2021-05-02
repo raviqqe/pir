@@ -1,3 +1,4 @@
+use super::free_variables::find_free_variables;
 use crate::{ir::*, types::Type};
 use std::collections::HashMap;
 
@@ -18,9 +19,7 @@ pub fn infer_environment(module: &Module) -> Module {
 fn infer_in_definition(definition: &Definition, variables: &HashMap<String, Type>) -> Definition {
     Definition::with_options(
         definition.name(),
-        definition
-            .body()
-            .find_variables()
+        find_free_variables(definition.body())
             .iter()
             .filter_map(|name| {
                 variables

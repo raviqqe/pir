@@ -1,5 +1,4 @@
 use super::{expression::Expression, primitive::Primitive};
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveAlternative {
@@ -21,9 +20,5 @@ impl PrimitiveAlternative {
 
     pub fn expression(&self) -> &Expression {
         &self.expression
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.expression.find_variables()
     }
 }

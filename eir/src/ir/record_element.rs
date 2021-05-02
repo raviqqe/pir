@@ -1,6 +1,6 @@
 use super::expression::Expression;
 use crate::types;
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct RecordElement {
@@ -28,9 +28,5 @@ impl RecordElement {
 
     pub fn record(&self) -> &Expression {
         &self.record
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.record.find_variables()
     }
 }

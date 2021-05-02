@@ -1,19 +1,9 @@
 use super::{primitive_case::PrimitiveCase, variant_case::VariantCase};
-use std::collections::HashSet;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Case {
     Primitive(PrimitiveCase),
     Variant(VariantCase),
-}
-
-impl Case {
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        match self {
-            Self::Primitive(primitive_case) => primitive_case.find_variables(),
-            Self::Variant(variant_case) => variant_case.find_variables(),
-        }
-    }
 }
 
 impl From<PrimitiveCase> for Case {

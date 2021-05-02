@@ -1,6 +1,6 @@
 use super::expression::Expression;
 use crate::types::Type;
-use std::{collections::HashSet, sync::Arc};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Variant {
@@ -22,9 +22,5 @@ impl Variant {
 
     pub fn payload(&self) -> &Expression {
         &self.payload
-    }
-
-    pub(crate) fn find_variables(&self) -> HashSet<String> {
-        self.payload.find_variables()
     }
 }
