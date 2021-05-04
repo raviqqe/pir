@@ -1054,5 +1054,17 @@ mod tests {
                 ]));
             }
         }
+
+        #[test]
+        fn compile_if() {
+            compile_module(&create_module_with_definitions(vec![
+                pir::ir::Definition::new(
+                    "f",
+                    vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
+                    pir::ir::If::new(true, 42.0, 42.0),
+                    pir::types::Primitive::Number,
+                ),
+            ]));
+        }
     }
 }

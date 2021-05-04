@@ -20,6 +20,11 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .into_iter()
             .chain(find_in_expression(application.argument()))
             .collect(),
+        Expression::If(if_) => find_in_expression(if_.condition())
+            .into_iter()
+            .chain(find_in_expression(if_.then()))
+            .chain(find_in_expression(if_.else_()))
+            .collect(),
         Expression::LetRecursive(let_) => find_in_expression(let_.expression())
             .into_iter()
             .chain(let_.definitions().iter().flat_map(find_in_definition))

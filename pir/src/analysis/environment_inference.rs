@@ -59,6 +59,7 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::FunctionApplication(application) => {
             infer_in_function_application(application, variables).into()
         }
+        Expression::If(if_) => infer_in_if(if_, variables).into(),
         Expression::Let(let_) => infer_in_let(let_, variables).into(),
         Expression::LetRecursive(let_) => infer_in_let_recursive(let_, variables).into(),
         Expression::Record(record) => infer_in_record(record, variables).into(),
@@ -86,6 +87,14 @@ fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
         Case::Primitive(case) => infer_in_primitive_case(case, variables).into(),
         Case::Variant(case) => infer_in_variant_case(case, variables).into(),
     }
+}
+
+fn infer_in_if(if_: &If, variables: &HashMap<String, Type>) -> If {
+    If::new(
+        infer_in_expression(if_.condition(), variables),
+        infer_in_expression(if_.then(), variables),
+        infer_in_expression(if_.else_(), variables),
+    )
 }
 
 fn infer_in_primitive_case(

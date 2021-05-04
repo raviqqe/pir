@@ -30,6 +30,11 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
                 .chain(collect_from_expression(application.argument()))
                 .collect()
         }
+        Expression::If(if_) => collect_from_expression(if_.condition())
+            .drain()
+            .chain(collect_from_expression(if_.then()))
+            .chain(collect_from_expression(if_.else_()))
+            .collect(),
         Expression::Let(let_) => collect_from_expression(let_.bound_expression())
             .drain()
             .chain(collect_from_expression(let_.expression()))

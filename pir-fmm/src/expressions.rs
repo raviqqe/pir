@@ -54,6 +54,9 @@ pub fn compile(
                     .collect::<Result<Vec<_>, _>>()?,
             )?
         }
+        pir::ir::Expression::If(if_) => {
+            compile_if(module_builder, instruction_builder, if_, variables, types)?
+        }
         pir::ir::Expression::Let(let_) => {
             compile_let(module_builder, instruction_builder, let_, variables, types)?
         }
@@ -148,6 +151,34 @@ fn compile_case(
             compile_variant_case(module_builder, instruction_builder, case, variables, types)?
         }
     })
+}
+
+fn compile_if(
+    module_builder: &fmm::build::ModuleBuilder,
+    instruction_builder: &fmm::build::InstructionBuilder,
+    if_: &pir::ir::If,
+    variables: &HashMap<String, fmm::build::TypedExpression>,
+    types: &HashMap<String, pir::types::RecordBody>,
+) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
+    let compile = |instruction_builder: &fmm::build::InstructionBuilder, expression| {
+        compile(
+            module_builder,
+            instruction_builder,
+            expression,
+            variables,
+            types,
+        )
+    };
+
+    instruction_builder.if_(
+        compile(instruction_builder, if_.condition())?,
+        |instruction_builder| {
+            Ok(instruction_builder.branch(compile(&instruction_builder, if_.then())?))
+        },
+        |instruction_builder| {
+            Ok(instruction_builder.branch(compile(&instruction_builder, if_.else_())?))
+        },
+    )
 }
 
 fn compile_variant_case(

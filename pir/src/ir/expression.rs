@@ -1,6 +1,6 @@
 use super::{
     arithmetic_operation::ArithmeticOperation, case::Case,
-    comparison_operation::ComparisonOperation, function_application::FunctionApplication,
+    comparison_operation::ComparisonOperation, function_application::FunctionApplication, if_::If,
     let_::Let, let_recursive::LetRecursive, primitive::Primitive, primitive_case::PrimitiveCase,
     record::Record, record_element::RecordElement, string::PirString, variable::Variable,
     variant::Variant, variant_case::VariantCase,
@@ -12,6 +12,7 @@ pub enum Expression {
     Case(Case),
     ComparisonOperation(ComparisonOperation),
     FunctionApplication(FunctionApplication),
+    If(If),
     Let(Let),
     LetRecursive(LetRecursive),
     Primitive(Primitive),
@@ -49,15 +50,15 @@ impl From<ComparisonOperation> for Expression {
     }
 }
 
-impl From<PirString> for Expression {
-    fn from(string: PirString) -> Self {
-        Self::String(string)
-    }
-}
-
 impl From<FunctionApplication> for Expression {
     fn from(function_application: FunctionApplication) -> Self {
         Self::FunctionApplication(function_application)
+    }
+}
+
+impl From<If> for Expression {
+    fn from(if_: If) -> Self {
+        Self::If(if_)
     }
 }
 
@@ -70,6 +71,12 @@ impl From<LetRecursive> for Expression {
 impl From<Let> for Expression {
     fn from(let_: Let) -> Self {
         Self::Let(let_)
+    }
+}
+
+impl From<PirString> for Expression {
+    fn from(string: PirString) -> Self {
+        Self::String(string)
     }
 }
 

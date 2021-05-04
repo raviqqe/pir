@@ -106,6 +106,19 @@ fn check_expression(
 
             function_type.result().clone()
         }
+        Expression::If(if_) => {
+            check_equality(
+                &check_expression(if_.condition(), variables)?,
+                &types::Primitive::Boolean.into(),
+            )?;
+
+            let then = check_expression(if_.then(), variables)?;
+            let else_ = check_expression(if_.else_(), variables)?;
+
+            check_equality(&then, &else_)?;
+
+            then
+        }
         Expression::LetRecursive(let_recursive) => {
             let mut variables = variables.clone();
 
