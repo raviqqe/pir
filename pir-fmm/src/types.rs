@@ -16,7 +16,7 @@ pub fn compile(
         }
         pir::types::Type::Primitive(primitive) => compile_primitive(primitive),
         pir::types::Type::Record(record) => compile_record(record, types),
-        pir::types::Type::String => compile_string().into(),
+        pir::types::Type::ByteString => compile_string().into(),
         pir::types::Type::Variant => compile_variant().into(),
     }
 }

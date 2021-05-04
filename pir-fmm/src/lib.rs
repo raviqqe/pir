@@ -575,13 +575,13 @@ mod tests {
                         pir::ir::Case::new(
                             pir::ir::Variable::new("x"),
                             vec![pir::ir::VariantAlternative::new(
-                                pir::types::Type::String,
+                                pir::types::Type::ByteString,
                                 "y",
                                 pir::ir::Variable::new("y"),
                             )],
                             None,
                         ),
-                        pir::types::Type::String,
+                        pir::types::Type::ByteString,
                     ),
                 ]));
             }
@@ -786,8 +786,8 @@ mod tests {
                         "f",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
                         pir::ir::Variant::new(
-                            pir::types::Type::String,
-                            pir::ir::PirString::new("foo"),
+                            pir::types::Type::ByteString,
+                            pir::ir::ByteString::new("foo"),
                         ),
                         pir::types::Type::Variant,
                     )],
@@ -851,7 +851,7 @@ mod tests {
                         vec![
                             pir::ir::Argument::new("x", pir::types::Primitive::Number),
                             pir::ir::Argument::new("y", pir::types::Primitive::Boolean),
-                            pir::ir::Argument::new("z", pir::types::Type::String),
+                            pir::ir::Argument::new("z", pir::types::Type::ByteString),
                         ],
                         pir::ir::Variable::new("x"),
                         pir::types::Primitive::Number,
@@ -867,7 +867,7 @@ mod tests {
                                 ),
                                 true,
                             ),
-                            pir::ir::PirString::new("foo"),
+                            pir::ir::ByteString::new("foo"),
                         ),
                         pir::types::Primitive::Number,
                     ),
@@ -909,7 +909,7 @@ mod tests {
                         vec![
                             pir::ir::Argument::new("x", pir::types::Primitive::Number),
                             pir::ir::Argument::new("y", pir::types::Primitive::Boolean),
-                            pir::ir::Argument::new("z", pir::types::Type::String),
+                            pir::ir::Argument::new("z", pir::types::Type::ByteString),
                         ],
                         pir::ir::Variable::new("x"),
                         pir::types::Primitive::Number,
@@ -924,7 +924,7 @@ mod tests {
                         pir::types::Function::new(
                             pir::types::Primitive::Boolean,
                             pir::types::Function::new(
-                                pir::types::Type::String,
+                                pir::types::Type::ByteString,
                                 pir::types::Primitive::Number,
                             ),
                         ),
@@ -940,7 +940,7 @@ mod tests {
                         vec![
                             pir::ir::Argument::new("x", pir::types::Primitive::Number),
                             pir::ir::Argument::new("y", pir::types::Primitive::Boolean),
-                            pir::ir::Argument::new("z", pir::types::Type::String),
+                            pir::ir::Argument::new("z", pir::types::Type::ByteString),
                         ],
                         pir::ir::Variable::new("x"),
                         pir::types::Primitive::Number,
@@ -953,7 +953,7 @@ mod tests {
                             true,
                         ),
                         pir::types::Function::new(
-                            pir::types::Type::String,
+                            pir::types::Type::ByteString,
                             pir::types::Primitive::Number,
                         ),
                     ),

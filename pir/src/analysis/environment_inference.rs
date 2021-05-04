@@ -65,7 +65,7 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::Record(record) => infer_in_record(record, variables).into(),
         Expression::RecordElement(element) => infer_in_record_element(element, variables).into(),
         Expression::Variant(variant) => infer_in_variant(variant, variables).into(),
-        Expression::Primitive(_) | Expression::String(_) | Expression::Variable(_) => {
+        Expression::Primitive(_) | Expression::ByteString(_) | Expression::Variable(_) => {
             expression.clone()
         }
     }

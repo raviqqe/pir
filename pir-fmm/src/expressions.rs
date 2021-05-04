@@ -105,7 +105,7 @@ pub fn compile(
                 element.index(),
             )?
         }
-        pir::ir::Expression::String(string) => fmm::build::record(vec![
+        pir::ir::Expression::ByteString(string) => fmm::build::record(vec![
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
                 module_builder.define_anonymous_variable(
@@ -279,7 +279,7 @@ fn compile_boxed_payload(
         builder,
         types::compile_variant_payload(),
         // Strings have two words.
-        if variant_type == &pir::types::Type::String {
+        if variant_type == &pir::types::Type::ByteString {
             let pointer = builder.allocate_heap(payload.type_().clone());
 
             builder.store(payload.clone(), pointer.clone());
@@ -297,7 +297,7 @@ fn compile_unboxed_payload(
     variant_type: &pir::types::Type,
     types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(if variant_type == &pir::types::Type::String {
+    Ok(if variant_type == &pir::types::Type::ByteString {
         builder.load(fmm::build::bit_cast(
             fmm::types::Pointer::new(types::compile(variant_type, types)),
             payload.clone(),
