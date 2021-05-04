@@ -588,7 +588,6 @@ mod tests {
         }
 
         mod records {
-
             use super::*;
 
             #[test]
