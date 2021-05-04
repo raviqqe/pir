@@ -30,6 +30,11 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
                 .chain(collect_from_expression(application.argument()))
                 .collect()
         }
+        Expression::If(if_) => collect_from_expression(if_.condition())
+            .drain()
+            .chain(collect_from_expression(if_.then()))
+            .chain(collect_from_expression(if_.else_()))
+            .collect(),
         Expression::Let(let_) => collect_from_expression(let_.bound_expression())
             .drain()
             .chain(collect_from_expression(let_.expression()))
@@ -57,30 +62,17 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
 }
 
 fn collect_from_case(case: &Case) -> HashSet<Type> {
-    match case {
-        Case::Primitive(case) => case
-            .alternatives()
-            .iter()
-            .flat_map(|alternative| collect_from_expression(alternative.expression()))
-            .chain(
-                case.default_alternative()
-                    .map(collect_from_expression)
-                    .unwrap_or_default(),
-            )
-            .collect(),
-        Case::Variant(case) => case
-            .alternatives()
-            .iter()
-            .flat_map(|alternative| {
-                vec![alternative.type_().clone()]
-                    .into_iter()
-                    .chain(collect_from_expression(alternative.expression()))
-            })
-            .chain(
-                case.default_alternative()
-                    .map(collect_from_expression)
-                    .unwrap_or_default(),
-            )
-            .collect(),
-    }
+    case.alternatives()
+        .iter()
+        .flat_map(|alternative| {
+            vec![alternative.type_().clone()]
+                .into_iter()
+                .chain(collect_from_expression(alternative.expression()))
+        })
+        .chain(
+            case.default_alternative()
+                .map(collect_from_expression)
+                .unwrap_or_default(),
+        )
+        .collect()
 }

@@ -20,6 +20,11 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .into_iter()
             .chain(find_in_expression(application.argument()))
             .collect(),
+        Expression::If(if_) => find_in_expression(if_.condition())
+            .into_iter()
+            .chain(find_in_expression(if_.then()))
+            .chain(find_in_expression(if_.else_()))
+            .collect(),
         Expression::LetRecursive(let_) => find_in_expression(let_.expression())
             .into_iter()
             .chain(let_.definitions().iter().flat_map(find_in_definition))
@@ -50,35 +55,20 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
 }
 
 fn find_in_case(case: &Case) -> HashSet<String> {
-    match case {
-        Case::Primitive(case) => find_in_expression(case.argument())
-            .into_iter()
-            .chain(
-                case.alternatives()
-                    .iter()
-                    .flat_map(|alternative| find_in_expression(alternative.expression())),
-            )
-            .chain(
-                case.default_alternative()
-                    .into_iter()
-                    .flat_map(find_in_expression),
-            )
-            .collect(),
-        Case::Variant(case) => find_in_expression(case.argument())
-            .into_iter()
-            .chain(case.alternatives().iter().flat_map(|alternative| {
-                find_in_expression(alternative.expression())
-                    .into_iter()
-                    .filter(|variable| variable != alternative.name())
-                    .collect::<HashSet<_>>()
-            }))
-            .chain(
-                case.default_alternative()
-                    .into_iter()
-                    .flat_map(find_in_expression),
-            )
-            .collect(),
-    }
+    find_in_expression(case.argument())
+        .into_iter()
+        .chain(case.alternatives().iter().flat_map(|alternative| {
+            find_in_expression(alternative.expression())
+                .into_iter()
+                .filter(|variable| variable != alternative.name())
+                .collect::<HashSet<_>>()
+        }))
+        .chain(
+            case.default_alternative()
+                .into_iter()
+                .flat_map(find_in_expression),
+        )
+        .collect()
 }
 
 fn find_in_definition(definition: &Definition) -> HashSet<String> {

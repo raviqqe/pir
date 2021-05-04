@@ -59,6 +59,7 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::FunctionApplication(application) => {
             infer_in_function_application(application, variables).into()
         }
+        Expression::If(if_) => infer_in_if(if_, variables).into(),
         Expression::Let(let_) => infer_in_let(let_, variables).into(),
         Expression::LetRecursive(let_) => infer_in_let_recursive(let_, variables).into(),
         Expression::Record(record) => infer_in_record(record, variables).into(),
@@ -81,40 +82,16 @@ fn infer_in_arithmetic_operation(
     )
 }
 
+fn infer_in_if(if_: &If, variables: &HashMap<String, Type>) -> If {
+    If::new(
+        infer_in_expression(if_.condition(), variables),
+        infer_in_expression(if_.then(), variables),
+        infer_in_expression(if_.else_(), variables),
+    )
+}
+
 fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
-    match case {
-        Case::Primitive(case) => infer_in_primitive_case(case, variables).into(),
-        Case::Variant(case) => infer_in_variant_case(case, variables).into(),
-    }
-}
-
-fn infer_in_primitive_case(
-    case: &PrimitiveCase,
-    variables: &HashMap<String, Type>,
-) -> PrimitiveCase {
-    PrimitiveCase::new(
-        infer_in_expression(case.argument(), variables),
-        case.alternatives()
-            .iter()
-            .map(|alternative| infer_in_primitive_alternative(alternative, variables))
-            .collect(),
-        case.default_alternative()
-            .map(|expression| infer_in_expression(expression, variables)),
-    )
-}
-
-fn infer_in_primitive_alternative(
-    alternative: &PrimitiveAlternative,
-    variables: &HashMap<String, Type>,
-) -> PrimitiveAlternative {
-    PrimitiveAlternative::new(
-        alternative.primitive(),
-        infer_in_expression(alternative.expression(), &&variables),
-    )
-}
-
-fn infer_in_variant_case(case: &VariantCase, variables: &HashMap<String, Type>) -> VariantCase {
-    VariantCase::new(
+    Case::new(
         infer_in_expression(case.argument(), variables),
         case.alternatives()
             .iter()

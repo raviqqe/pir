@@ -1,9 +1,8 @@
 use super::{
     arithmetic_operation::ArithmeticOperation, case::Case,
-    comparison_operation::ComparisonOperation, function_application::FunctionApplication,
-    let_::Let, let_recursive::LetRecursive, primitive::Primitive, primitive_case::PrimitiveCase,
-    record::Record, record_element::RecordElement, string::PirString, variable::Variable,
-    variant::Variant, variant_case::VariantCase,
+    comparison_operation::ComparisonOperation, function_application::FunctionApplication, if_::If,
+    let_::Let, let_recursive::LetRecursive, primitive::Primitive, record::Record,
+    record_element::RecordElement, string::PirString, variable::Variable, variant::Variant,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -12,6 +11,7 @@ pub enum Expression {
     Case(Case),
     ComparisonOperation(ComparisonOperation),
     FunctionApplication(FunctionApplication),
+    If(If),
     Let(Let),
     LetRecursive(LetRecursive),
     Primitive(Primitive),
@@ -37,27 +37,21 @@ impl From<ArithmeticOperation> for Expression {
     }
 }
 
-impl From<Case> for Expression {
-    fn from(case: Case) -> Self {
-        Self::Case(case)
-    }
-}
-
 impl From<ComparisonOperation> for Expression {
     fn from(operation: ComparisonOperation) -> Self {
         Self::ComparisonOperation(operation)
     }
 }
 
-impl From<PirString> for Expression {
-    fn from(string: PirString) -> Self {
-        Self::String(string)
-    }
-}
-
 impl From<FunctionApplication> for Expression {
     fn from(function_application: FunctionApplication) -> Self {
         Self::FunctionApplication(function_application)
+    }
+}
+
+impl From<If> for Expression {
+    fn from(if_: If) -> Self {
+        Self::If(if_)
     }
 }
 
@@ -73,15 +67,15 @@ impl From<Let> for Expression {
     }
 }
 
-impl<T: Into<Primitive>> From<T> for Expression {
-    fn from(primitive: T) -> Self {
-        Self::Primitive(primitive.into())
+impl From<PirString> for Expression {
+    fn from(string: PirString) -> Self {
+        Self::String(string)
     }
 }
 
-impl From<PrimitiveCase> for Expression {
-    fn from(primitive_case: PrimitiveCase) -> Self {
-        Self::Case(primitive_case.into())
+impl<T: Into<Primitive>> From<T> for Expression {
+    fn from(primitive: T) -> Self {
+        Self::Primitive(primitive.into())
     }
 }
 
@@ -109,8 +103,8 @@ impl From<Variant> for Expression {
     }
 }
 
-impl From<VariantCase> for Expression {
-    fn from(variant_case: VariantCase) -> Self {
-        Self::Case(variant_case.into())
+impl From<Case> for Expression {
+    fn from(case: Case) -> Self {
+        Self::Case(case)
     }
 }
