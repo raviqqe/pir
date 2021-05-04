@@ -491,7 +491,7 @@ mod tests {
             ]));
         }
 
-        mod variant_cases {
+        mod cases {
             use super::*;
 
             #[test]
@@ -500,7 +500,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "f",
                         vec![pir::ir::Argument::new("x", pir::types::Type::Variant)],
-                        pir::ir::VariantCase::new(
+                        pir::ir::Case::new(
                             pir::ir::Variable::new("x"),
                             vec![pir::ir::VariantAlternative::new(
                                 pir::types::Primitive::Number,
@@ -526,7 +526,7 @@ mod tests {
                     vec![pir::ir::Definition::new(
                         "f",
                         vec![pir::ir::Argument::new("x", pir::types::Type::Variant)],
-                        pir::ir::VariantCase::new(
+                        pir::ir::Case::new(
                             pir::ir::Variable::new("x"),
                             vec![pir::ir::VariantAlternative::new(
                                 record_type.clone(),
@@ -552,7 +552,7 @@ mod tests {
                     vec![pir::ir::Definition::new(
                         "f",
                         vec![pir::ir::Argument::new("x", pir::types::Type::Variant)],
-                        pir::ir::VariantCase::new(
+                        pir::ir::Case::new(
                             pir::ir::Variable::new("x"),
                             vec![pir::ir::VariantAlternative::new(
                                 record_type.clone(),
@@ -572,7 +572,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "f",
                         vec![pir::ir::Argument::new("x", pir::types::Type::Variant)],
-                        pir::ir::VariantCase::new(
+                        pir::ir::Case::new(
                             pir::ir::Variable::new("x"),
                             vec![pir::ir::VariantAlternative::new(
                                 pir::types::Type::String,

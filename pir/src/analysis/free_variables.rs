@@ -54,7 +54,7 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
     }
 }
 
-fn find_in_case(case: &VariantCase) -> HashSet<String> {
+fn find_in_case(case: &Case) -> HashSet<String> {
     find_in_expression(case.argument())
         .into_iter()
         .chain(case.alternatives().iter().flat_map(|alternative| {

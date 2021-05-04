@@ -191,7 +191,7 @@ fn check_expression(
 }
 
 fn check_case(
-    case: &VariantCase,
+    case: &Case,
     variables: &HashMap<&str, Type>,
     types: &HashMap<&str, &types::RecordBody>,
 ) -> Result<Type, TypeCheckError> {
@@ -532,7 +532,7 @@ mod tests {
                 check_types(&create_module_from_definitions(vec![Definition::new(
                     "f",
                     vec![Argument::new("x", Type::Variant)],
-                    VariantCase::new(Variable::new("x"), vec![], Some(42.0.into()),),
+                    Case::new(Variable::new("x"), vec![], Some(42.0.into()),),
                     types::Primitive::Number,
                 )])),
                 Ok(())
@@ -545,7 +545,7 @@ mod tests {
                 check_types(&create_module_from_definitions(vec![Definition::new(
                     "f",
                     vec![Argument::new("x", Type::Variant)],
-                    VariantCase::new(
+                    Case::new(
                         Variable::new("x"),
                         vec![VariantAlternative::new(
                             types::Primitive::Number,
@@ -565,7 +565,7 @@ mod tests {
             let module = create_module_from_definitions(vec![Definition::new(
                 "f",
                 vec![Argument::new("x", Type::Variant)],
-                VariantCase::new(Variable::new("x"), vec![], None),
+                Case::new(Variable::new("x"), vec![], None),
                 types::Primitive::Number,
             )]);
 
@@ -581,7 +581,7 @@ mod tests {
                 "f",
                 vec![],
                 vec![Argument::new("x", Type::Variant)],
-                VariantCase::new(
+                Case::new(
                     Variable::new("x"),
                     vec![
                         VariantAlternative::new(types::Primitive::Boolean, "x", Variable::new("x")),
@@ -606,7 +606,7 @@ mod tests {
                         "f",
                         vec![],
                         vec![Argument::new("x", Type::Variant)],
-                        VariantCase::new(
+                        Case::new(
                             Variable::new("x"),
                             vec![VariantAlternative::new(
                                 types::Record::new("foo"),

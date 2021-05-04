@@ -90,8 +90,8 @@ fn infer_in_if(if_: &If, variables: &HashMap<String, Type>) -> If {
     )
 }
 
-fn infer_in_case(case: &VariantCase, variables: &HashMap<String, Type>) -> VariantCase {
-    VariantCase::new(
+fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
+    Case::new(
         infer_in_expression(case.argument(), variables),
         case.alternatives()
             .iter()

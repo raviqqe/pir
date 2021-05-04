@@ -2,13 +2,13 @@ use super::{expression::Expression, variant_alternative::VariantAlternative};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct VariantCase {
+pub struct Case {
     argument: Arc<Expression>,
     alternatives: Vec<VariantAlternative>,
     default_alternative: Option<Arc<Expression>>,
 }
 
-impl VariantCase {
+impl Case {
     pub fn new(
         argument: impl Into<Expression>,
         alternatives: Vec<VariantAlternative>,

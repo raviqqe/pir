@@ -167,7 +167,7 @@ fn compile_if(
 fn compile_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &pir::ir::VariantCase,
+    case: &pir::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {

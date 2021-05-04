@@ -61,7 +61,7 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
     }
 }
 
-fn collect_from_case(case: &VariantCase) -> HashSet<Type> {
+fn collect_from_case(case: &Case) -> HashSet<Type> {
     case.alternatives()
         .iter()
         .flat_map(|alternative| {

@@ -9,7 +9,7 @@ pub enum TypeCheckError {
     ElementIndexOutOfBounds(RecordElement),
     ForeignDefinitionNotFound(ForeignDefinition),
     FunctionExpected(Expression),
-    NoAlternativeFound(VariantCase),
+    NoAlternativeFound(Case),
     TypeNotFound(types::Record),
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
