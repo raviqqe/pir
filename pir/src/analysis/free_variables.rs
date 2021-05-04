@@ -50,7 +50,7 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
         Expression::RecordElement(element) => find_in_expression(element.record()),
         Expression::Variable(variable) => vec![variable.name().into()].into_iter().collect(),
         Expression::Variant(variant) => find_in_expression(variant.payload()),
-        Expression::Primitive(_) | Expression::String(_) => HashSet::new(),
+        Expression::Primitive(_) | Expression::ByteString(_) => HashSet::new(),
     }
 }
 

@@ -2,10 +2,10 @@ use super::{function::Function, primitive::Primitive, record::Record};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
+    ByteString,
     Function(Function),
     Primitive(Primitive),
     Record(Record),
-    String,
     Variant,
 }
 
