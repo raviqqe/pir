@@ -8,9 +8,9 @@ pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
 pub fn compile(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    expression: &eir::ir::Expression,
+    expression: &pir::ir::Expression,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let compile = |expression, variables| {
         compile(
@@ -23,7 +23,7 @@ pub fn compile(
     };
 
     Ok(match expression {
-        eir::ir::Expression::ArithmeticOperation(operation) => compile_arithmetic_operation(
+        pir::ir::Expression::ArithmeticOperation(operation) => compile_arithmetic_operation(
             module_builder,
             instruction_builder,
             operation,
@@ -31,10 +31,10 @@ pub fn compile(
             types,
         )?
         .into(),
-        eir::ir::Expression::Case(case) => {
+        pir::ir::Expression::Case(case) => {
             compile_case(module_builder, instruction_builder, case, variables, types)?
         }
-        eir::ir::Expression::ComparisonOperation(operation) => compile_comparison_operation(
+        pir::ir::Expression::ComparisonOperation(operation) => compile_comparison_operation(
             module_builder,
             instruction_builder,
             operation,
@@ -42,7 +42,7 @@ pub fn compile(
             types,
         )?
         .into(),
-        eir::ir::Expression::FunctionApplication(function_application) => {
+        pir::ir::Expression::FunctionApplication(function_application) => {
             function_applications::compile(
                 module_builder,
                 instruction_builder,
@@ -54,18 +54,18 @@ pub fn compile(
                     .collect::<Result<Vec<_>, _>>()?,
             )?
         }
-        eir::ir::Expression::Let(let_) => {
+        pir::ir::Expression::Let(let_) => {
             compile_let(module_builder, instruction_builder, let_, variables, types)?
         }
-        eir::ir::Expression::LetRecursive(let_recursive) => compile_let_recursive(
+        pir::ir::Expression::LetRecursive(let_recursive) => compile_let_recursive(
             module_builder,
             instruction_builder,
             let_recursive,
             variables,
             types,
         )?,
-        eir::ir::Expression::Primitive(primitive) => compile_primitive(*primitive).into(),
-        eir::ir::Expression::Record(record) => {
+        pir::ir::Expression::Primitive(primitive) => compile_primitive(*primitive).into(),
+        pir::ir::Expression::Record(record) => {
             let unboxed = fmm::build::record(
                 record
                     .elements()
@@ -84,7 +84,7 @@ pub fn compile(
                 unboxed.into()
             }
         }
-        eir::ir::Expression::RecordElement(element) => {
+        pir::ir::Expression::RecordElement(element) => {
             let record = compile(element.record(), variables)?;
 
             instruction_builder.deconstruct_record(
@@ -102,7 +102,7 @@ pub fn compile(
                 element.index(),
             )?
         }
-        eir::ir::Expression::String(string) => fmm::build::record(vec![
+        pir::ir::Expression::String(string) => fmm::build::record(vec![
             fmm::build::bit_cast(
                 fmm::types::Pointer::new(fmm::types::Primitive::Integer8),
                 module_builder.define_anonymous_variable(
@@ -120,8 +120,8 @@ pub fn compile(
             fmm::ir::Primitive::PointerInteger(string.value().len() as i64).into(),
         ])
         .into(),
-        eir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
-        eir::ir::Expression::Variant(variant) => fmm::build::record(vec![
+        pir::ir::Expression::Variable(variable) => variables[variable.name()].clone(),
+        pir::ir::Expression::Variant(variant) => fmm::build::record(vec![
             compile_variant_tag(variant.type_()),
             compile_boxed_payload(
                 instruction_builder,
@@ -136,15 +136,15 @@ pub fn compile(
 fn compile_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &eir::ir::Case,
+    case: &pir::ir::Case,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(match case {
-        eir::ir::Case::Primitive(case) => {
+        pir::ir::Case::Primitive(case) => {
             compile_primitive_case(module_builder, instruction_builder, case, variables, types)?
         }
-        eir::ir::Case::Variant(case) => {
+        pir::ir::Case::Variant(case) => {
             compile_variant_case(module_builder, instruction_builder, case, variables, types)?
         }
     })
@@ -153,9 +153,9 @@ fn compile_case(
 fn compile_variant_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &eir::ir::VariantCase,
+    case: &pir::ir::VariantCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
@@ -181,10 +181,10 @@ fn compile_variant_alternatives(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[eir::ir::VariantAlternative],
-    default_alternative: Option<&eir::ir::Expression>,
+    alternatives: &[pir::ir::VariantAlternative],
+    default_alternative: Option<&pir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     Ok(match alternatives {
         [] => default_alternative
@@ -252,20 +252,20 @@ fn compile_variant_alternatives(
     })
 }
 
-fn compile_variant_tag(type_: &eir::types::Type) -> fmm::build::TypedExpression {
+fn compile_variant_tag(type_: &pir::types::Type) -> fmm::build::TypedExpression {
     fmm::build::variable(types::compile_type_id(type_), types::compile_variant_tag())
 }
 
 fn compile_boxed_payload(
     builder: &fmm::build::InstructionBuilder,
     payload: &fmm::build::TypedExpression,
-    variant_type: &eir::types::Type,
+    variant_type: &pir::types::Type,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     compile_union_bit_cast(
         builder,
         types::compile_variant_payload(),
         // Strings have two words.
-        if variant_type == &eir::types::Type::String {
+        if variant_type == &pir::types::Type::String {
             let pointer = builder.allocate_heap(payload.type_().clone());
 
             builder.store(payload.clone(), pointer.clone());
@@ -280,10 +280,10 @@ fn compile_boxed_payload(
 fn compile_unboxed_payload(
     builder: &fmm::build::InstructionBuilder,
     payload: &fmm::build::TypedExpression,
-    variant_type: &eir::types::Type,
-    types: &HashMap<String, eir::types::RecordBody>,
+    variant_type: &pir::types::Type,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(if variant_type == &eir::types::Type::String {
+    Ok(if variant_type == &pir::types::Type::String {
         builder.load(fmm::build::bit_cast(
             fmm::types::Pointer::new(types::compile(variant_type, types)),
             payload.clone(),
@@ -322,9 +322,9 @@ fn compile_union_bit_cast(
 fn compile_primitive_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    case: &eir::ir::PrimitiveCase,
+    case: &pir::ir::PrimitiveCase,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let argument = compile(
         module_builder,
@@ -350,10 +350,10 @@ fn compile_primitive_alternatives(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[eir::ir::PrimitiveAlternative],
-    default_alternative: Option<&eir::ir::Expression>,
+    alternatives: &[pir::ir::PrimitiveAlternative],
+    default_alternative: Option<&pir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -400,9 +400,9 @@ fn compile_primitive_alternatives(
 fn compile_let(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    let_: &eir::ir::Let,
+    let_: &pir::ir::Let,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let compile = |expression, variables| {
         compile(
@@ -430,9 +430,9 @@ fn compile_let(
 fn compile_let_recursive(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    let_: &eir::ir::LetRecursive,
+    let_: &pir::ir::LetRecursive,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     let mut variables = variables.clone();
     let mut closure_pointers = HashMap::new();
@@ -478,9 +478,9 @@ fn compile_let_recursive(
 fn compile_arithmetic_operation(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    operation: &eir::ir::ArithmeticOperation,
+    operation: &pir::ir::ArithmeticOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::ir::ArithmeticOperation, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -496,16 +496,16 @@ fn compile_arithmetic_operation(
     let rhs = compile(operation.rhs())?;
 
     Ok(match operation.operator() {
-        eir::ir::ArithmeticOperator::Add => {
+        pir::ir::ArithmeticOperator::Add => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Add, lhs, rhs)?
         }
-        eir::ir::ArithmeticOperator::Subtract => {
+        pir::ir::ArithmeticOperator::Subtract => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Subtract, lhs, rhs)?
         }
-        eir::ir::ArithmeticOperator::Multiply => {
+        pir::ir::ArithmeticOperator::Multiply => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Multiply, lhs, rhs)?
         }
-        eir::ir::ArithmeticOperator::Divide => {
+        pir::ir::ArithmeticOperator::Divide => {
             fmm::build::arithmetic_operation(fmm::ir::ArithmeticOperator::Divide, lhs, rhs)?
         }
     })
@@ -514,9 +514,9 @@ fn compile_arithmetic_operation(
 fn compile_comparison_operation(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
-    operation: &eir::ir::ComparisonOperation,
+    operation: &pir::ir::ComparisonOperation,
     variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::ir::ComparisonOperation, fmm::build::BuildError> {
     let compile = |expression| {
         compile(
@@ -533,14 +533,14 @@ fn compile_comparison_operation(
 
     fmm::build::comparison_operation(
         match operation.operator() {
-            eir::ir::ComparisonOperator::Equal => fmm::ir::ComparisonOperator::Equal,
-            eir::ir::ComparisonOperator::NotEqual => fmm::ir::ComparisonOperator::NotEqual,
-            eir::ir::ComparisonOperator::GreaterThan => fmm::ir::ComparisonOperator::GreaterThan,
-            eir::ir::ComparisonOperator::GreaterThanOrEqual => {
+            pir::ir::ComparisonOperator::Equal => fmm::ir::ComparisonOperator::Equal,
+            pir::ir::ComparisonOperator::NotEqual => fmm::ir::ComparisonOperator::NotEqual,
+            pir::ir::ComparisonOperator::GreaterThan => fmm::ir::ComparisonOperator::GreaterThan,
+            pir::ir::ComparisonOperator::GreaterThanOrEqual => {
                 fmm::ir::ComparisonOperator::GreaterThanOrEqual
             }
-            eir::ir::ComparisonOperator::LessThan => fmm::ir::ComparisonOperator::LessThan,
-            eir::ir::ComparisonOperator::LessThanOrEqual => {
+            pir::ir::ComparisonOperator::LessThan => fmm::ir::ComparisonOperator::LessThan,
+            pir::ir::ComparisonOperator::LessThanOrEqual => {
                 fmm::ir::ComparisonOperator::LessThanOrEqual
             }
         },
@@ -549,9 +549,9 @@ fn compile_comparison_operation(
     )
 }
 
-fn compile_primitive(primitive: eir::ir::Primitive) -> fmm::ir::Primitive {
+fn compile_primitive(primitive: pir::ir::Primitive) -> fmm::ir::Primitive {
     match primitive {
-        eir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(boolean),
-        eir::ir::Primitive::Number(number) => fmm::ir::Primitive::Float64(number),
+        pir::ir::Primitive::Boolean(boolean) => fmm::ir::Primitive::Boolean(boolean),
+        pir::ir::Primitive::Number(number) => fmm::ir::Primitive::Float64(number),
     }
 }
