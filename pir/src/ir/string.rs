@@ -1,9 +1,9 @@
 #[derive(Clone, Debug, PartialEq)]
-pub struct EirString {
+pub struct PirString {
     value: Vec<u8>,
 }
 
-impl EirString {
+impl PirString {
     pub fn new(value: impl Into<Vec<u8>>) -> Self {
         Self {
             value: value.into(),

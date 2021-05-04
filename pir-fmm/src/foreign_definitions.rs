@@ -3,14 +3,14 @@ use std::collections::HashMap;
 
 pub fn compile_foreign_definition(
     module_builder: &fmm::build::ModuleBuilder,
-    definition: &eir::ir::ForeignDefinition,
-    function_type: &eir::types::Function,
+    definition: &pir::ir::ForeignDefinition,
+    function_type: &pir::types::Function,
     global_variable: &fmm::build::TypedExpression,
-    types: &HashMap<String, eir::types::RecordBody>,
+    types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<(), fmm::build::BuildError> {
     // TODO Support a target calling convention.
     let foreign_function_type =
-        types::compile_foreign_function(function_type, eir::ir::CallingConvention::Source, types);
+        types::compile_foreign_function(function_type, pir::ir::CallingConvention::Source, types);
     let arguments = foreign_function_type
         .arguments()
         .iter()

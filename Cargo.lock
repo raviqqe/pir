@@ -59,24 +59,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
-name = "eir"
-version = "0.1.0"
-dependencies = [
- "pretty_assertions",
-]
-
-[[package]]
-name = "eir-fmm"
-version = "0.1.0"
-dependencies = [
- "eir",
- "fmm",
- "fmm-c",
- "fmm-llvm",
- "tempfile",
-]
-
-[[package]]
 name = "either"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -274,6 +256,24 @@ checksum = "467d164a6de56270bd7c4d070df81d07beace25012d5103ced4e9ff08d6afdb7"
 dependencies = [
  "fixedbitset",
  "indexmap",
+]
+
+[[package]]
+name = "pir"
+version = "0.1.0"
+dependencies = [
+ "pretty_assertions",
+]
+
+[[package]]
+name = "pir-fmm"
+version = "0.1.0"
+dependencies = [
+ "fmm",
+ "fmm-c",
+ "fmm-llvm",
+ "pir",
+ "tempfile",
 ]
 
 [[package]]
