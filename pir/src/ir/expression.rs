@@ -105,6 +105,6 @@ impl From<Variant> for Expression {
 
 impl From<VariantCase> for Expression {
     fn from(variant_case: VariantCase) -> Self {
-        Self::Case(variant_case.into())
+        Self::Case(variant_case)
     }
 }
