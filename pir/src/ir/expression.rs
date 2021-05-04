@@ -1,9 +1,9 @@
 use super::{
     arithmetic_operation::ArithmeticOperation, case::Case,
     comparison_operation::ComparisonOperation, function_application::FunctionApplication, if_::If,
-    let_::Let, let_recursive::LetRecursive, primitive::Primitive, primitive_case::PrimitiveCase,
-    record::Record, record_element::RecordElement, string::PirString, variable::Variable,
-    variant::Variant, variant_case::VariantCase,
+    let_::Let, let_recursive::LetRecursive, primitive::Primitive, record::Record,
+    record_element::RecordElement, string::PirString, variable::Variable, variant::Variant,
+    variant_case::VariantCase,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -83,12 +83,6 @@ impl From<PirString> for Expression {
 impl<T: Into<Primitive>> From<T> for Expression {
     fn from(primitive: T) -> Self {
         Self::Primitive(primitive.into())
-    }
-}
-
-impl From<PrimitiveCase> for Expression {
-    fn from(primitive_case: PrimitiveCase) -> Self {
-        Self::Case(primitive_case.into())
     }
 }
 

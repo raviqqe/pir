@@ -63,16 +63,6 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
 
 fn collect_from_case(case: &Case) -> HashSet<Type> {
     match case {
-        Case::Primitive(case) => case
-            .alternatives()
-            .iter()
-            .flat_map(|alternative| collect_from_expression(alternative.expression()))
-            .chain(
-                case.default_alternative()
-                    .map(collect_from_expression)
-                    .unwrap_or_default(),
-            )
-            .collect(),
         Case::Variant(case) => case
             .alternatives()
             .iter()

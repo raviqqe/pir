@@ -200,37 +200,6 @@ fn check_case(
     };
 
     match case {
-        Case::Primitive(case) => {
-            let argument_type = check_expression(case.argument(), variables)?;
-            let mut expression_type = None;
-
-            for alternative in case.alternatives() {
-                check_equality(
-                    &check_primitive(alternative.primitive()).into(),
-                    &argument_type.clone(),
-                )?;
-
-                let alternative_type = check_expression(alternative.expression(), variables)?;
-
-                if let Some(expression_type) = &expression_type {
-                    check_equality(&alternative_type, expression_type)?;
-                } else {
-                    expression_type = Some(alternative_type);
-                }
-            }
-
-            if let Some(expression) = case.default_alternative() {
-                let alternative_type = check_expression(expression, &variables)?;
-
-                if let Some(expression_type) = &expression_type {
-                    check_equality(&alternative_type, expression_type)?;
-                } else {
-                    expression_type = Some(alternative_type);
-                }
-            }
-
-            expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone().into()))
-        }
         Case::Variant(case) => {
             check_equality(
                 &check_expression(case.argument(), variables)?,
@@ -541,191 +510,120 @@ mod tests {
         ));
     }
 
+    mod if_ {
+        use super::*;
+
+        #[test]
+        fn check() {
+            assert_eq!(
+                check_types(&create_module_from_definitions(vec![Definition::new(
+                    "f",
+                    vec![Argument::new("x", types::Primitive::Number)],
+                    If::new(true, 42.0, 42.0),
+                    types::Primitive::Number,
+                ),])),
+                Ok(())
+            );
+        }
+    }
+
     mod case_expressions {
         use super::*;
 
-        mod variant {
-            use super::*;
+        #[test]
+        fn check_case_expressions_only_with_default_alternative() {
+            assert_eq!(
+                check_types(&create_module_from_definitions(vec![Definition::new(
+                    "f",
+                    vec![Argument::new("x", Type::Variant)],
+                    VariantCase::new(Variable::new("x"), vec![], Some(42.0.into()),),
+                    types::Primitive::Number,
+                )])),
+                Ok(())
+            );
+        }
 
-            #[test]
-            fn check_case_expressions_only_with_default_alternative() {
-                assert_eq!(
-                    check_types(&create_module_from_definitions(vec![Definition::new(
-                        "f",
-                        vec![Argument::new("x", Type::Variant)],
-                        VariantCase::new(Variable::new("x"), vec![], Some(42.0.into()),),
-                        types::Primitive::Number,
-                    )])),
-                    Ok(())
-                );
-            }
+        #[test]
+        fn check_case_expressions_with_one_alternative() {
+            assert_eq!(
+                check_types(&create_module_from_definitions(vec![Definition::new(
+                    "f",
+                    vec![Argument::new("x", Type::Variant)],
+                    VariantCase::new(
+                        Variable::new("x"),
+                        vec![VariantAlternative::new(
+                            types::Primitive::Number,
+                            "y",
+                            Variable::new("y")
+                        )],
+                        None
+                    ),
+                    types::Primitive::Number,
+                )])),
+                Ok(())
+            );
+        }
 
-            #[test]
-            fn check_case_expressions_with_one_alternative() {
-                assert_eq!(
-                    check_types(&create_module_from_definitions(vec![Definition::new(
+        #[test]
+        fn fail_to_check_case_expressions_without_alternatives() {
+            let module = create_module_from_definitions(vec![Definition::new(
+                "f",
+                vec![Argument::new("x", Type::Variant)],
+                VariantCase::new(Variable::new("x"), vec![], None),
+                types::Primitive::Number,
+            )]);
+
+            assert!(matches!(
+                check_types(&module),
+                Err(TypeCheckError::NoAlternativeFound(_))
+            ));
+        }
+
+        #[test]
+        fn fail_to_check_case_expressions_with_inconsistent_alternative_types() {
+            let module = create_module_from_definitions(vec![Definition::with_environment(
+                "f",
+                vec![],
+                vec![Argument::new("x", Type::Variant)],
+                VariantCase::new(
+                    Variable::new("x"),
+                    vec![
+                        VariantAlternative::new(types::Primitive::Boolean, "x", Variable::new("x")),
+                        VariantAlternative::new(types::Primitive::Number, "x", 42.0),
+                    ],
+                    None,
+                ),
+                types::Primitive::Number,
+            )]);
+
+            assert!(matches!(
+                check_types(&module),
+                Err(TypeCheckError::TypesNotMatched(_, _))
+            ));
+        }
+
+        #[test]
+        fn fail_for_unmatched_case_type() {
+            assert!(matches!(
+                check_types(&create_module_from_definitions(vec![
+                    Definition::with_environment(
                         "f",
+                        vec![],
                         vec![Argument::new("x", Type::Variant)],
                         VariantCase::new(
                             Variable::new("x"),
                             vec![VariantAlternative::new(
-                                types::Primitive::Number,
+                                types::Record::new("foo"),
                                 "y",
                                 Variable::new("y")
                             )],
                             None
                         ),
-                        types::Primitive::Number,
-                    )])),
-                    Ok(())
-                );
-            }
-
-            #[test]
-            fn fail_to_check_case_expressions_without_alternatives() {
-                let module = create_module_from_definitions(vec![Definition::new(
-                    "f",
-                    vec![Argument::new("x", Type::Variant)],
-                    VariantCase::new(Variable::new("x"), vec![], None),
-                    types::Primitive::Number,
-                )]);
-
-                assert!(matches!(
-                    check_types(&module),
-                    Err(TypeCheckError::NoAlternativeFound(_))
-                ));
-            }
-
-            #[test]
-            fn fail_to_check_case_expressions_with_inconsistent_alternative_types() {
-                let module = create_module_from_definitions(vec![Definition::with_environment(
-                    "f",
-                    vec![],
-                    vec![Argument::new("x", Type::Variant)],
-                    VariantCase::new(
-                        Variable::new("x"),
-                        vec![
-                            VariantAlternative::new(
-                                types::Primitive::Boolean,
-                                "x",
-                                Variable::new("x"),
-                            ),
-                            VariantAlternative::new(types::Primitive::Number, "x", 42.0),
-                        ],
-                        None,
-                    ),
-                    types::Primitive::Number,
-                )]);
-
-                assert!(matches!(
-                    check_types(&module),
-                    Err(TypeCheckError::TypesNotMatched(_, _))
-                ));
-            }
-
-            #[test]
-            fn fail_for_unmatched_case_type() {
-                assert!(matches!(
-                    check_types(&create_module_from_definitions(vec![
-                        Definition::with_environment(
-                            "f",
-                            vec![],
-                            vec![Argument::new("x", Type::Variant)],
-                            VariantCase::new(
-                                Variable::new("x"),
-                                vec![VariantAlternative::new(
-                                    types::Record::new("foo"),
-                                    "y",
-                                    Variable::new("y")
-                                )],
-                                None
-                            ),
-                            types::Record::new("bar"),
-                        )
-                    ])),
-                    Err(TypeCheckError::TypesNotMatched(_, _))
-                ));
-            }
-        }
-
-        mod primitive {
-            use super::*;
-
-            #[test]
-            fn check_case_expressions_only_with_default_alternative() {
-                assert_eq!(
-                    check_types(&create_module_from_definitions(vec![
-                        Definition::with_environment(
-                            "f",
-                            vec![],
-                            vec![Argument::new("x", types::Primitive::Number)],
-                            PrimitiveCase::new(42.0, vec![], Some(42.0.into()),),
-                            types::Primitive::Number,
-                        )
-                    ])),
-                    Ok(())
-                );
-            }
-
-            #[test]
-            fn check_case_expressions_with_one_alternative() {
-                assert_eq!(
-                    check_types(&create_module_from_definitions(vec![
-                        Definition::with_environment(
-                            "f",
-                            vec![],
-                            vec![Argument::new("x", types::Primitive::Number)],
-                            PrimitiveCase::new(
-                                42.0,
-                                vec![PrimitiveAlternative::new(42.0, 42.0)],
-                                None
-                            ),
-                            types::Primitive::Number,
-                        )
-                    ],)),
-                    Ok(())
-                );
-            }
-
-            #[test]
-            fn check_case_expressions_with_one_alternative_and_default_alternative() {
-                assert_eq!(
-                    check_types(&create_module_from_definitions(vec![
-                        Definition::with_environment(
-                            "f",
-                            vec![],
-                            vec![Argument::new("x", types::Primitive::Number)],
-                            PrimitiveCase::new(
-                                42.0,
-                                vec![PrimitiveAlternative::new(42.0, 42.0)],
-                                Some(42.0.into())
-                            ),
-                            types::Primitive::Number,
-                        )
-                    ],)),
-                    Ok(())
-                );
-            }
-
-            #[test]
-            fn fail_for_unmatched_case_type() {
-                assert!(matches!(
-                    check_types(&create_module_from_definitions(vec![
-                        Definition::with_environment(
-                            "f",
-                            vec![],
-                            vec![Argument::new("x", types::Primitive::Number)],
-                            PrimitiveCase::new(
-                                42.0,
-                                vec![PrimitiveAlternative::new(true, 42.0)],
-                                Some(42.0.into())
-                            ),
-                            types::Primitive::Number,
-                        )
-                    ],)),
-                    Err(TypeCheckError::TypesNotMatched(_, _))
-                ));
-            }
+                        types::Record::new("bar"),
+                    )
+                ])),
+                Err(TypeCheckError::TypesNotMatched(_, _))
+            ));
         }
     }
 

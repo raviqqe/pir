@@ -144,9 +144,6 @@ fn compile_case(
     types: &HashMap<String, pir::types::RecordBody>,
 ) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
     Ok(match case {
-        pir::ir::Case::Primitive(case) => {
-            compile_primitive_case(module_builder, instruction_builder, case, variables, types)?
-        }
         pir::ir::Case::Variant(case) => {
             compile_variant_case(module_builder, instruction_builder, case, variables, types)?
         }
@@ -347,84 +344,6 @@ fn compile_union_bit_cast(
             ),
             1,
         )?
-    })
-}
-
-fn compile_primitive_case(
-    module_builder: &fmm::build::ModuleBuilder,
-    instruction_builder: &fmm::build::InstructionBuilder,
-    case: &pir::ir::PrimitiveCase,
-    variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, pir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    let argument = compile(
-        module_builder,
-        instruction_builder,
-        case.argument(),
-        variables,
-        types,
-    )?;
-
-    Ok(compile_primitive_alternatives(
-        module_builder,
-        instruction_builder,
-        argument,
-        case.alternatives(),
-        case.default_alternative(),
-        variables,
-        types,
-    )?
-    .unwrap())
-}
-
-fn compile_primitive_alternatives(
-    module_builder: &fmm::build::ModuleBuilder,
-    instruction_builder: &fmm::build::InstructionBuilder,
-    argument: fmm::build::TypedExpression,
-    alternatives: &[pir::ir::PrimitiveAlternative],
-    default_alternative: Option<&pir::ir::Expression>,
-    variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, pir::types::RecordBody>,
-) -> Result<Option<fmm::build::TypedExpression>, fmm::build::BuildError> {
-    let compile = |expression| {
-        compile(
-            module_builder,
-            instruction_builder,
-            expression,
-            variables,
-            types,
-        )
-    };
-
-    Ok(match alternatives {
-        [] => default_alternative.map(compile).transpose()?,
-        [alternative, ..] => Some(instruction_builder.if_(
-            fmm::build::comparison_operation(
-                fmm::ir::ComparisonOperator::Equal,
-                argument.clone(),
-                compile_primitive(alternative.primitive()),
-            )?,
-            |instruction_builder| {
-                Ok(instruction_builder.branch(compile(alternative.expression())?))
-            },
-            |instruction_builder| {
-                Ok(
-                    if let Some(expression) = compile_primitive_alternatives(
-                        module_builder,
-                        &instruction_builder,
-                        argument.clone(),
-                        &alternatives[1..],
-                        default_alternative,
-                        variables,
-                        types,
-                    )? {
-                        instruction_builder.branch(expression)
-                    } else {
-                        instruction_builder.unreachable()
-                    },
-                )
-            },
-        )?),
     })
 }
 

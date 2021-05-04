@@ -587,60 +587,6 @@ mod tests {
             }
         }
 
-        mod primitive_cases {
-            use super::*;
-
-            #[test]
-            fn compile() {
-                compile_module(&create_module_with_definitions(vec![
-                    pir::ir::Definition::new(
-                        "f",
-                        vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::PrimitiveCase::new(
-                            pir::ir::Variable::new("x"),
-                            vec![
-                                pir::ir::PrimitiveAlternative::new(
-                                    pir::ir::Primitive::Number(0.0),
-                                    pir::ir::Primitive::Number(1.0),
-                                ),
-                                pir::ir::PrimitiveAlternative::new(
-                                    pir::ir::Primitive::Number(2.0),
-                                    pir::ir::Primitive::Number(3.0),
-                                ),
-                            ],
-                            None,
-                        ),
-                        pir::types::Primitive::Number,
-                    ),
-                ]));
-            }
-
-            #[test]
-            fn compile_with_default_alternative() {
-                compile_module(&create_module_with_definitions(vec![
-                    pir::ir::Definition::new(
-                        "f",
-                        vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::PrimitiveCase::new(
-                            pir::ir::Variable::new("x"),
-                            vec![
-                                pir::ir::PrimitiveAlternative::new(
-                                    pir::ir::Primitive::Number(0.0),
-                                    pir::ir::Primitive::Number(1.0),
-                                ),
-                                pir::ir::PrimitiveAlternative::new(
-                                    pir::ir::Primitive::Number(2.0),
-                                    pir::ir::Primitive::Number(3.0),
-                                ),
-                            ],
-                            Some(pir::ir::Primitive::Number(4.0).into()),
-                        ),
-                        pir::types::Primitive::Number,
-                    ),
-                ]));
-            }
-        }
-
         mod records {
 
             use super::*;

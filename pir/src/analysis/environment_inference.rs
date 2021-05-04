@@ -84,7 +84,6 @@ fn infer_in_arithmetic_operation(
 
 fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
     match case {
-        Case::Primitive(case) => infer_in_primitive_case(case, variables).into(),
         Case::Variant(case) => infer_in_variant_case(case, variables).into(),
     }
 }
@@ -94,31 +93,6 @@ fn infer_in_if(if_: &If, variables: &HashMap<String, Type>) -> If {
         infer_in_expression(if_.condition(), variables),
         infer_in_expression(if_.then(), variables),
         infer_in_expression(if_.else_(), variables),
-    )
-}
-
-fn infer_in_primitive_case(
-    case: &PrimitiveCase,
-    variables: &HashMap<String, Type>,
-) -> PrimitiveCase {
-    PrimitiveCase::new(
-        infer_in_expression(case.argument(), variables),
-        case.alternatives()
-            .iter()
-            .map(|alternative| infer_in_primitive_alternative(alternative, variables))
-            .collect(),
-        case.default_alternative()
-            .map(|expression| infer_in_expression(expression, variables)),
-    )
-}
-
-fn infer_in_primitive_alternative(
-    alternative: &PrimitiveAlternative,
-    variables: &HashMap<String, Type>,
-) -> PrimitiveAlternative {
-    PrimitiveAlternative::new(
-        alternative.primitive(),
-        infer_in_expression(alternative.expression(), &&variables),
     )
 }
 
