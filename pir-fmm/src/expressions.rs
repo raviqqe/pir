@@ -136,20 +136,6 @@ pub fn compile(
     })
 }
 
-fn compile_case(
-    module_builder: &fmm::build::ModuleBuilder,
-    instruction_builder: &fmm::build::InstructionBuilder,
-    case: &pir::ir::Case,
-    variables: &HashMap<String, fmm::build::TypedExpression>,
-    types: &HashMap<String, pir::types::RecordBody>,
-) -> Result<fmm::build::TypedExpression, fmm::build::BuildError> {
-    Ok(match case {
-        pir::ir::Case::Variant(case) => {
-            compile_variant_case(module_builder, instruction_builder, case, variables, types)?
-        }
-    })
-}
-
 fn compile_if(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
@@ -178,7 +164,7 @@ fn compile_if(
     )
 }
 
-fn compile_variant_case(
+fn compile_case(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     case: &pir::ir::VariantCase,

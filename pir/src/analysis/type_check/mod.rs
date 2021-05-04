@@ -191,7 +191,7 @@ fn check_expression(
 }
 
 fn check_case(
-    case: &Case,
+    case: &VariantCase,
     variables: &HashMap<&str, Type>,
     types: &HashMap<&str, &types::RecordBody>,
 ) -> Result<Type, TypeCheckError> {
@@ -199,42 +199,38 @@ fn check_case(
         check_expression(expression, variables, types)
     };
 
-    match case {
-        Case::Variant(case) => {
-            check_equality(
-                &check_expression(case.argument(), variables)?,
-                &Type::Variant,
-            )?;
+    check_equality(
+        &check_expression(case.argument(), variables)?,
+        &Type::Variant,
+    )?;
 
-            let mut expression_type = None;
+    let mut expression_type = None;
 
-            for alternative in case.alternatives() {
-                let mut variables = variables.clone();
+    for alternative in case.alternatives() {
+        let mut variables = variables.clone();
 
-                variables.insert(alternative.name(), alternative.type_().clone());
+        variables.insert(alternative.name(), alternative.type_().clone());
 
-                let alternative_type = check_expression(alternative.expression(), &variables)?;
+        let alternative_type = check_expression(alternative.expression(), &variables)?;
 
-                if let Some(expression_type) = &expression_type {
-                    check_equality(&alternative_type, expression_type)?;
-                } else {
-                    expression_type = Some(alternative_type);
-                }
-            }
-
-            if let Some(expression) = case.default_alternative() {
-                let alternative_type = check_expression(expression, &variables)?;
-
-                if let Some(expression_type) = &expression_type {
-                    check_equality(&alternative_type, expression_type)?;
-                } else {
-                    expression_type = Some(alternative_type);
-                }
-            }
-
-            expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone().into()))
+        if let Some(expression_type) = &expression_type {
+            check_equality(&alternative_type, expression_type)?;
+        } else {
+            expression_type = Some(alternative_type);
         }
     }
+
+    if let Some(expression) = case.default_alternative() {
+        let alternative_type = check_expression(expression, &variables)?;
+
+        if let Some(expression_type) = &expression_type {
+            check_equality(&alternative_type, expression_type)?;
+        } else {
+            expression_type = Some(alternative_type);
+        }
+    }
+
+    expression_type.ok_or_else(|| TypeCheckError::NoAlternativeFound(case.clone()))
 }
 
 fn check_primitive(primitive: Primitive) -> types::Primitive {

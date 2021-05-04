@@ -82,12 +82,6 @@ fn infer_in_arithmetic_operation(
     )
 }
 
-fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
-    match case {
-        Case::Variant(case) => infer_in_variant_case(case, variables).into(),
-    }
-}
-
 fn infer_in_if(if_: &If, variables: &HashMap<String, Type>) -> If {
     If::new(
         infer_in_expression(if_.condition(), variables),
@@ -96,7 +90,7 @@ fn infer_in_if(if_: &If, variables: &HashMap<String, Type>) -> If {
     )
 }
 
-fn infer_in_variant_case(case: &VariantCase, variables: &HashMap<String, Type>) -> VariantCase {
+fn infer_in_case(case: &VariantCase, variables: &HashMap<String, Type>) -> VariantCase {
     VariantCase::new(
         infer_in_expression(case.argument(), variables),
         case.alternatives()

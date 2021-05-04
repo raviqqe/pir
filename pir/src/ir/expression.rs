@@ -1,15 +1,14 @@
 use super::{
-    arithmetic_operation::ArithmeticOperation, case::Case,
-    comparison_operation::ComparisonOperation, function_application::FunctionApplication, if_::If,
-    let_::Let, let_recursive::LetRecursive, primitive::Primitive, record::Record,
-    record_element::RecordElement, string::PirString, variable::Variable, variant::Variant,
-    variant_case::VariantCase,
+    arithmetic_operation::ArithmeticOperation, comparison_operation::ComparisonOperation,
+    function_application::FunctionApplication, if_::If, let_::Let, let_recursive::LetRecursive,
+    primitive::Primitive, record::Record, record_element::RecordElement, string::PirString,
+    variable::Variable, variant::Variant, variant_case::VariantCase,
 };
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     ArithmeticOperation(ArithmeticOperation),
-    Case(Case),
+    Case(VariantCase),
     ComparisonOperation(ComparisonOperation),
     FunctionApplication(FunctionApplication),
     If(If),
@@ -35,12 +34,6 @@ impl Expression {
 impl From<ArithmeticOperation> for Expression {
     fn from(operation: ArithmeticOperation) -> Self {
         Self::ArithmeticOperation(operation)
-    }
-}
-
-impl From<Case> for Expression {
-    fn from(case: Case) -> Self {
-        Self::Case(case)
     }
 }
 

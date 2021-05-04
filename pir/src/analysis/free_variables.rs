@@ -54,23 +54,21 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
     }
 }
 
-fn find_in_case(case: &Case) -> HashSet<String> {
-    match case {
-        Case::Variant(case) => find_in_expression(case.argument())
-            .into_iter()
-            .chain(case.alternatives().iter().flat_map(|alternative| {
-                find_in_expression(alternative.expression())
-                    .into_iter()
-                    .filter(|variable| variable != alternative.name())
-                    .collect::<HashSet<_>>()
-            }))
-            .chain(
-                case.default_alternative()
-                    .into_iter()
-                    .flat_map(find_in_expression),
-            )
-            .collect(),
-    }
+fn find_in_case(case: &VariantCase) -> HashSet<String> {
+    find_in_expression(case.argument())
+        .into_iter()
+        .chain(case.alternatives().iter().flat_map(|alternative| {
+            find_in_expression(alternative.expression())
+                .into_iter()
+                .filter(|variable| variable != alternative.name())
+                .collect::<HashSet<_>>()
+        }))
+        .chain(
+            case.default_alternative()
+                .into_iter()
+                .flat_map(find_in_expression),
+        )
+        .collect()
 }
 
 fn find_in_definition(definition: &Definition) -> HashSet<String> {
