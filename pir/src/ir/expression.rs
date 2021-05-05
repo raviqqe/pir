@@ -22,15 +22,6 @@ pub enum Expression {
     Variant(Variant),
 }
 
-impl Expression {
-    pub fn to_variable(&self) -> Option<&Variable> {
-        match self {
-            Self::Variable(variable) => Some(variable),
-            _ => None,
-        }
-    }
-}
-
 impl From<ArithmeticOperation> for Expression {
     fn from(operation: ArithmeticOperation) -> Self {
         Self::ArithmeticOperation(operation)
