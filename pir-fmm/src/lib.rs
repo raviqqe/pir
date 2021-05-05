@@ -1,3 +1,4 @@
+mod calls;
 mod closures;
 mod declarations;
 mod definitions;
@@ -6,7 +7,6 @@ mod error;
 mod expressions;
 mod foreign_declarations;
 mod foreign_definitions;
-mod calls;
 mod type_information;
 mod types;
 
@@ -388,7 +388,7 @@ mod tests {
                     vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
                     pir::ir::Call::new(
                         pir::ir::Variable::new("f"),
-                        pir::ir::Variable::new("x"),
+                        vec![pir::ir::Variable::new("x").into()],
                     ),
                     pir::types::Primitive::Number,
                 ),
@@ -433,10 +433,7 @@ mod tests {
                             ),
                             pir::types::Primitive::Number,
                         )],
-                        pir::ir::Call::new(
-                            pir::ir::Variable::new("g"),
-                            pir::ir::Primitive::Number(42.0),
-                        ),
+                        pir::ir::Call::new(pir::ir::Variable::new("g"), vec![42.0.into()]),
                     ),
                     pir::types::Primitive::Number,
                 ),
@@ -479,11 +476,8 @@ mod tests {
                             ),
                         )],
                         pir::ir::Call::new(
-                            pir::ir::Call::new(
-                                pir::ir::Variable::new("g"),
-                                pir::ir::Primitive::Number(42.0),
-                            ),
-                            pir::ir::Primitive::Number(42.0),
+                            pir::ir::Variable::new("g"),
+                            vec![42.0.into(), 42.0.into()],
                         ),
                     ),
                     pir::types::Primitive::Number,
@@ -768,10 +762,7 @@ mod tests {
                         vec![pir::ir::Argument::new("x", record_type.clone())],
                         pir::ir::Variant::new(
                             record_type.clone(),
-                            pir::ir::Record::new(
-                                record_type,
-                                vec![pir::ir::Primitive::Number(42.0).into()],
-                            ),
+                            pir::ir::Record::new(record_type, vec![42.0.into()]),
                         ),
                         pir::types::Type::Variant,
                     )],
@@ -810,10 +801,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::Call::new(
-                            pir::ir::Variable::new("f"),
-                            pir::ir::Primitive::Number(42.0),
-                        ),
+                        pir::ir::Call::new(pir::ir::Variable::new("f"), vec![42.0.into()]),
                         pir::types::Primitive::Number,
                     ),
                 ]));
@@ -835,8 +823,8 @@ mod tests {
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
                         pir::ir::Call::new(
-                            pir::ir::Call::new(pir::ir::Variable::new("f"), 42.0),
-                            true,
+                            pir::ir::Variable::new("f"),
+                            vec![42.0.into(), true.into()],
                         ),
                         pir::types::Primitive::Number,
                     ),
@@ -860,14 +848,12 @@ mod tests {
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
                         pir::ir::Call::new(
-                            pir::ir::Call::new(
-                                pir::ir::Call::new(
-                                    pir::ir::Variable::new("f"),
-                                    42.0,
-                                ),
-                                true,
-                            ),
-                            pir::ir::ByteString::new("foo"),
+                            pir::ir::Variable::new("f"),
+                            vec![
+                                42.0.into(),
+                                true.into(),
+                                pir::ir::ByteString::new("foo").into(),
+                            ],
                         ),
                         pir::types::Primitive::Number,
                     ),
@@ -889,10 +875,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::Call::new(
-                            pir::ir::Variable::new("f"),
-                            pir::ir::Primitive::Number(42.0),
-                        ),
+                        pir::ir::Call::new(pir::ir::Variable::new("f"), vec![42.0.into()]),
                         pir::types::Function::new(
                             pir::types::Primitive::Boolean,
                             pir::types::Primitive::Number,
@@ -917,10 +900,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::Call::new(
-                            pir::ir::Variable::new("f"),
-                            pir::ir::Primitive::Number(42.0),
-                        ),
+                        pir::ir::Call::new(pir::ir::Variable::new("f"), vec![42.0.into()]),
                         pir::types::Function::new(
                             pir::types::Primitive::Boolean,
                             pir::types::Function::new(
@@ -949,8 +929,8 @@ mod tests {
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
                         pir::ir::Call::new(
-                            pir::ir::Call::new(pir::ir::Variable::new("f"), 42.0),
-                            true,
+                            pir::ir::Variable::new("f"),
+                            vec![42.0.into(), true.into()],
                         ),
                         pir::types::Function::new(
                             pir::types::Type::ByteString,
@@ -988,11 +968,12 @@ mod tests {
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
                         pir::ir::Call::new(
-                            pir::ir::Call::new(
-                                pir::ir::Variable::new("f"),
-                                pir::ir::Primitive::Number(111.0),
-                            ),
-                            pir::ir::Primitive::Number(222.0),
+                            pir::ir::Variable::new("f"),
+                            vec![
+                                111.0.into(),
+                                pir::ir::Call::new(pir::ir::Variable::new("f"), vec![222.0.into()])
+                                    .into(),
+                            ],
                         ),
                         pir::types::Primitive::Number,
                     ),
