@@ -6,7 +6,7 @@ mod error;
 mod expressions;
 mod foreign_declarations;
 mod foreign_definitions;
-mod function_applications;
+mod calls;
 mod type_information;
 mod types;
 
@@ -386,7 +386,7 @@ mod tests {
                 pir::ir::Definition::new(
                     "g",
                     vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                    pir::ir::FunctionApplication::new(
+                    pir::ir::Call::new(
                         pir::ir::Variable::new("f"),
                         pir::ir::Variable::new("x"),
                     ),
@@ -433,7 +433,7 @@ mod tests {
                             ),
                             pir::types::Primitive::Number,
                         )],
-                        pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
                             pir::ir::Variable::new("g"),
                             pir::ir::Primitive::Number(42.0),
                         ),
@@ -478,8 +478,8 @@ mod tests {
                                 pir::types::Primitive::Number,
                             ),
                         )],
-                        pir::ir::FunctionApplication::new(
-                            pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
+                            pir::ir::Call::new(
                                 pir::ir::Variable::new("g"),
                                 pir::ir::Primitive::Number(42.0),
                             ),
@@ -795,7 +795,7 @@ mod tests {
             }
         }
 
-        mod function_applications {
+        mod calls {
             use super::*;
 
             #[test]
@@ -810,7 +810,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
                             pir::ir::Variable::new("f"),
                             pir::ir::Primitive::Number(42.0),
                         ),
@@ -834,8 +834,8 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
-                            pir::ir::FunctionApplication::new(pir::ir::Variable::new("f"), 42.0),
+                        pir::ir::Call::new(
+                            pir::ir::Call::new(pir::ir::Variable::new("f"), 42.0),
                             true,
                         ),
                         pir::types::Primitive::Number,
@@ -859,9 +859,9 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
-                            pir::ir::FunctionApplication::new(
-                                pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
+                            pir::ir::Call::new(
+                                pir::ir::Call::new(
                                     pir::ir::Variable::new("f"),
                                     42.0,
                                 ),
@@ -889,7 +889,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
                             pir::ir::Variable::new("f"),
                             pir::ir::Primitive::Number(42.0),
                         ),
@@ -917,7 +917,7 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
                             pir::ir::Variable::new("f"),
                             pir::ir::Primitive::Number(42.0),
                         ),
@@ -948,8 +948,8 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
-                            pir::ir::FunctionApplication::new(pir::ir::Variable::new("f"), 42.0),
+                        pir::ir::Call::new(
+                            pir::ir::Call::new(pir::ir::Variable::new("f"), 42.0),
                             true,
                         ),
                         pir::types::Function::new(
@@ -987,8 +987,8 @@ mod tests {
                     pir::ir::Definition::new(
                         "g",
                         vec![pir::ir::Argument::new("x", pir::types::Primitive::Number)],
-                        pir::ir::FunctionApplication::new(
-                            pir::ir::FunctionApplication::new(
+                        pir::ir::Call::new(
+                            pir::ir::Call::new(
                                 pir::ir::Variable::new("f"),
                                 pir::ir::Primitive::Number(111.0),
                             ),

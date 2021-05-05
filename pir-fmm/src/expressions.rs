@@ -1,4 +1,4 @@
-use crate::{closures, entry_functions, function_applications, types};
+use crate::{closures, entry_functions, calls, types};
 use std::collections::HashMap;
 
 pub fn compile_arity(arity: usize) -> fmm::ir::Primitive {
@@ -42,12 +42,12 @@ pub fn compile(
             types,
         )?
         .into(),
-        pir::ir::Expression::FunctionApplication(function_application) => {
-            function_applications::compile(
+        pir::ir::Expression::Call(call) => {
+            calls::compile(
                 module_builder,
                 instruction_builder,
-                compile(function_application.first_function(), variables)?,
-                &function_application
+                compile(call.first_function(), variables)?,
+                &call
                     .arguments()
                     .into_iter()
                     .map(|argument| compile(argument, variables))

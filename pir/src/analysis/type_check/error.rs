@@ -14,6 +14,7 @@ pub enum TypeCheckError {
     TypesNotMatched(Type, Type),
     VariableNotFound(Variable),
     VariantInVariant(Variant),
+    WrongArgumentCount(Call),
     WrongElementCount(Expression),
 }
 

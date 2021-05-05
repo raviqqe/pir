@@ -56,9 +56,7 @@ fn infer_in_expression(expression: &Expression, variables: &HashMap<String, Type
         Expression::ComparisonOperation(operation) => {
             infer_in_comparison_operation(operation, variables).into()
         }
-        Expression::FunctionApplication(application) => {
-            infer_in_function_application(application, variables).into()
-        }
+        Expression::Call(call) => infer_in_call(call, variables).into(),
         Expression::If(if_) => infer_in_if(if_, variables).into(),
         Expression::Let(let_) => infer_in_let(let_, variables).into(),
         Expression::LetRecursive(let_) => infer_in_let_recursive(let_, variables).into(),
@@ -128,13 +126,13 @@ fn infer_in_comparison_operation(
     )
 }
 
-fn infer_in_function_application(
-    application: &FunctionApplication,
-    variables: &HashMap<String, Type>,
-) -> FunctionApplication {
-    FunctionApplication::new(
-        infer_in_expression(application.function(), variables),
-        infer_in_expression(application.argument(), variables),
+fn infer_in_call(call: &Call, variables: &HashMap<String, Type>) -> Call {
+    Call::new(
+        infer_in_expression(call.function(), variables),
+        call.arguments()
+            .iter()
+            .map(|argument| infer_in_expression(argument, variables))
+            .collect(),
     )
 }
 

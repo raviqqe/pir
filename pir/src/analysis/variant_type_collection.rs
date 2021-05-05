@@ -24,12 +24,14 @@ fn collect_from_expression(expression: &Expression) -> HashSet<Type> {
             .drain()
             .chain(collect_from_expression(operation.rhs()))
             .collect(),
-        Expression::FunctionApplication(application) => {
-            collect_from_expression(application.function())
-                .drain()
-                .chain(collect_from_expression(application.argument()))
-                .collect()
-        }
+        Expression::Call(call) => collect_from_expression(call.function())
+            .drain()
+            .chain(
+                call.arguments()
+                    .iter()
+                    .flat_map(|argument| collect_from_expression(argument)),
+            )
+            .collect(),
         Expression::If(if_) => collect_from_expression(if_.condition())
             .drain()
             .chain(collect_from_expression(if_.then()))

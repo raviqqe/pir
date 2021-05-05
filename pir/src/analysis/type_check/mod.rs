@@ -92,17 +92,19 @@ fn check_expression(
 
             types::Primitive::Boolean.into()
         }
-        Expression::FunctionApplication(function_application) => {
-            let function_type = check_expression(function_application.function(), variables)?
+        Expression::Call(call) => {
+            let function_type = check_expression(call.function(), variables)?
                 .into_function()
-                .ok_or_else(|| {
-                    TypeCheckError::FunctionExpected(function_application.function().clone())
-                })?;
+                .ok_or_else(|| TypeCheckError::FunctionExpected(call.function().clone()))?;
 
-            check_equality(
-                &check_expression(function_application.argument(), variables)?,
-                function_type.argument(),
-            )?;
+            if call.arguments().len() != function_type.arguments().into_iter().count() {
+                return Err(TypeCheckError::WrongArgumentCount(call.clone()));
+            }
+
+            for (argument, argument_type) in call.arguments().iter().zip(function_type.arguments())
+            {
+                check_equality(&check_expression(argument, variables)?, argument_type)?;
+            }
 
             function_type.result().clone()
         }
@@ -355,7 +357,7 @@ mod tests {
     }
 
     #[test]
-    fn check_types_of_function_applications() {
+    fn check_types_of_calls() {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
@@ -366,7 +368,7 @@ mod tests {
             Definition::new(
                 "g",
                 vec![Argument::new("x", types::Primitive::Number)],
-                FunctionApplication::new(Variable::new("f"), 42.0),
+                Call::new(Variable::new("f"), vec![42.0.into()]),
                 types::Primitive::Number,
             ),
         ]);
@@ -375,7 +377,7 @@ mod tests {
     }
 
     #[test]
-    fn fail_to_check_types_of_function_applications() {
+    fn fail_to_check_types_of_call_with_argument_of_wrong_type() {
         let module = create_module_from_definitions(vec![
             Definition::new(
                 "f",
@@ -386,14 +388,37 @@ mod tests {
             Definition::new(
                 "g",
                 vec![Argument::new("x", types::Primitive::Number)],
-                FunctionApplication::new(FunctionApplication::new(Variable::new("f"), 42.0), 42.0),
+                Call::new(Variable::new("f"), vec![true.into()]),
                 types::Primitive::Number,
             ),
         ]);
 
         assert!(matches!(
             check_types(&module),
-            Err(TypeCheckError::FunctionExpected(_))
+            Err(TypeCheckError::TypesNotMatched(_, _))
+        ));
+    }
+
+    #[test]
+    fn check_types_of_call_with_wrong_number_of_arguments() {
+        let module = create_module_from_definitions(vec![
+            Definition::new(
+                "f",
+                vec![Argument::new("x", types::Primitive::Number)],
+                42.0,
+                types::Primitive::Number,
+            ),
+            Definition::new(
+                "g",
+                vec![Argument::new("x", types::Primitive::Number)],
+                Call::new(Variable::new("f"), vec![]),
+                types::Primitive::Number,
+            ),
+        ]);
+
+        assert!(matches!(
+            check_types(&module),
+            Err(TypeCheckError::WrongArgumentCount(_))
         ));
     }
 
@@ -475,7 +500,7 @@ mod tests {
             vec![Definition::new(
                 "g",
                 vec![Argument::new("x", types::Primitive::Number)],
-                FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                Call::new(Variable::new("f"), vec![Variable::new("x").into()]),
                 types::Primitive::Number,
             )],
         );
@@ -820,7 +845,7 @@ mod tests {
                 vec![Definition::new(
                     "g",
                     vec![Argument::new("x", types::Primitive::Number)],
-                    FunctionApplication::new(Variable::new("f"), Variable::new("x")),
+                    Call::new(Variable::new("f"), vec![Variable::new("x").into()]),
                     types::Primitive::Number,
                 )],
             );
