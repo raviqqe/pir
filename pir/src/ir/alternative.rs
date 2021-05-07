@@ -2,13 +2,13 @@ use super::expression::Expression;
 use crate::types::Type;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct VariantAlternative {
+pub struct Alternative {
     type_: Type,
     name: String,
     expression: Expression,
 }
 
-impl VariantAlternative {
+impl Alternative {
     pub fn new(
         type_: impl Into<Type>,
         name: impl Into<String>,

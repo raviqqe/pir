@@ -1,3 +1,4 @@
+mod alternative;
 mod argument;
 mod arithmetic_operation;
 mod arithmetic_operator;
@@ -22,8 +23,8 @@ mod string;
 mod type_definition;
 mod variable;
 mod variant;
-mod variant_alternative;
 
+pub use alternative::*;
 pub use argument::*;
 pub use arithmetic_operation::*;
 pub use arithmetic_operator::*;
@@ -48,4 +49,3 @@ pub use string::*;
 pub use type_definition::*;
 pub use variable::*;
 pub use variant::*;
-pub use variant_alternative::*;

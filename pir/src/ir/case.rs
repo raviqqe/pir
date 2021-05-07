@@ -1,17 +1,17 @@
-use super::{expression::Expression, variant_alternative::VariantAlternative};
+use super::{alternative::Alternative, expression::Expression};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Case {
     argument: Arc<Expression>,
-    alternatives: Vec<VariantAlternative>,
+    alternatives: Vec<Alternative>,
     default_alternative: Option<Arc<Expression>>,
 }
 
 impl Case {
     pub fn new(
         argument: impl Into<Expression>,
-        alternatives: Vec<VariantAlternative>,
+        alternatives: Vec<Alternative>,
         default_alternative: Option<Expression>,
     ) -> Self {
         Self {
@@ -25,7 +25,7 @@ impl Case {
         &self.argument
     }
 
-    pub fn alternatives(&self) -> &[VariantAlternative] {
+    pub fn alternatives(&self) -> &[Alternative] {
         &self.alternatives
     }
 

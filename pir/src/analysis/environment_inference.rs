@@ -95,22 +95,22 @@ fn infer_in_case(case: &Case, variables: &HashMap<String, Type>) -> Case {
         infer_in_expression(case.argument(), variables),
         case.alternatives()
             .iter()
-            .map(|alternative| infer_in_variant_alternative(alternative, variables))
+            .map(|alternative| infer_in_alternative(alternative, variables))
             .collect(),
         case.default_alternative()
             .map(|expression| infer_in_expression(expression, variables)),
     )
 }
 
-fn infer_in_variant_alternative(
-    alternative: &VariantAlternative,
+fn infer_in_alternative(
+    alternative: &Alternative,
     variables: &HashMap<String, Type>,
-) -> VariantAlternative {
+) -> Alternative {
     let mut variables = variables.clone();
 
     variables.insert(alternative.name().into(), alternative.type_().clone());
 
-    VariantAlternative::new(
+    Alternative::new(
         alternative.type_().clone(),
         alternative.name(),
         infer_in_expression(alternative.expression(), &&variables),
