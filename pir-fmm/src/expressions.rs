@@ -179,7 +179,7 @@ fn compile_case(
         types,
     )?;
 
-    Ok(compile_variant_alternatives(
+    Ok(compile_alternatives(
         module_builder,
         instruction_builder,
         argument,
@@ -191,11 +191,11 @@ fn compile_case(
     .unwrap())
 }
 
-fn compile_variant_alternatives(
+fn compile_alternatives(
     module_builder: &fmm::build::ModuleBuilder,
     instruction_builder: &fmm::build::InstructionBuilder,
     argument: fmm::build::TypedExpression,
-    alternatives: &[pir::ir::VariantAlternative],
+    alternatives: &[pir::ir::Alternative],
     default_alternative: Option<&pir::ir::Expression>,
     variables: &HashMap<String, fmm::build::TypedExpression>,
     types: &HashMap<String, pir::types::RecordBody>,
@@ -247,7 +247,7 @@ fn compile_variant_alternatives(
             },
             |instruction_builder| {
                 Ok(
-                    if let Some(expression) = compile_variant_alternatives(
+                    if let Some(expression) = compile_alternatives(
                         module_builder,
                         &instruction_builder,
                         argument.clone(),

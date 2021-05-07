@@ -547,7 +547,7 @@ mod tests {
                     vec![Argument::new("x", Type::Variant)],
                     Case::new(
                         Variable::new("x"),
-                        vec![VariantAlternative::new(
+                        vec![Alternative::new(
                             types::Primitive::Number,
                             "y",
                             Variable::new("y")
@@ -584,8 +584,8 @@ mod tests {
                 Case::new(
                     Variable::new("x"),
                     vec![
-                        VariantAlternative::new(types::Primitive::Boolean, "x", Variable::new("x")),
-                        VariantAlternative::new(types::Primitive::Number, "x", 42.0),
+                        Alternative::new(types::Primitive::Boolean, "x", Variable::new("x")),
+                        Alternative::new(types::Primitive::Number, "x", 42.0),
                     ],
                     None,
                 ),
@@ -608,7 +608,7 @@ mod tests {
                         vec![Argument::new("x", Type::Variant)],
                         Case::new(
                             Variable::new("x"),
-                            vec![VariantAlternative::new(
+                            vec![Alternative::new(
                                 types::Record::new("foo"),
                                 "y",
                                 Variable::new("y")
