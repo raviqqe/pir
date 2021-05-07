@@ -16,9 +16,13 @@ fn find_in_expression(expression: &Expression) -> HashSet<String> {
             .into_iter()
             .chain(find_in_expression(operation.rhs()))
             .collect(),
-        Expression::FunctionApplication(application) => find_in_expression(application.function())
+        Expression::Call(call) => find_in_expression(call.function())
             .into_iter()
-            .chain(find_in_expression(application.argument()))
+            .chain(
+                call.arguments()
+                    .iter()
+                    .flat_map(|argument| find_in_expression(argument)),
+            )
             .collect(),
         Expression::If(if_) => find_in_expression(if_.condition())
             .into_iter()

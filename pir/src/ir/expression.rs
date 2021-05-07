@@ -1,8 +1,8 @@
 use super::{
-    arithmetic_operation::ArithmeticOperation, case::Case,
-    comparison_operation::ComparisonOperation, function_application::FunctionApplication, if_::If,
-    let_::Let, let_recursive::LetRecursive, primitive::Primitive, record::Record,
-    record_element::RecordElement, string::ByteString, variable::Variable, variant::Variant,
+    arithmetic_operation::ArithmeticOperation, call::Call, case::Case,
+    comparison_operation::ComparisonOperation, if_::If, let_::Let, let_recursive::LetRecursive,
+    primitive::Primitive, record::Record, record_element::RecordElement, string::ByteString,
+    variable::Variable, variant::Variant,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -11,7 +11,7 @@ pub enum Expression {
     ByteString(ByteString),
     Case(Case),
     ComparisonOperation(ComparisonOperation),
-    FunctionApplication(FunctionApplication),
+    Call(Call),
     If(If),
     Let(Let),
     LetRecursive(LetRecursive),
@@ -20,15 +20,6 @@ pub enum Expression {
     RecordElement(RecordElement),
     Variable(Variable),
     Variant(Variant),
-}
-
-impl Expression {
-    pub fn to_variable(&self) -> Option<&Variable> {
-        match self {
-            Self::Variable(variable) => Some(variable),
-            _ => None,
-        }
-    }
 }
 
 impl From<ArithmeticOperation> for Expression {
@@ -43,9 +34,9 @@ impl From<ComparisonOperation> for Expression {
     }
 }
 
-impl From<FunctionApplication> for Expression {
-    fn from(function_application: FunctionApplication) -> Self {
-        Self::FunctionApplication(function_application)
+impl From<Call> for Expression {
+    fn from(call: Call) -> Self {
+        Self::Call(call)
     }
 }
 
