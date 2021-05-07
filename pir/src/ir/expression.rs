@@ -1,8 +1,8 @@
 use super::{
-    arithmetic_operation::ArithmeticOperation, case::Case,
-    comparison_operation::ComparisonOperation, call::Call, if_::If,
-    let_::Let, let_recursive::LetRecursive, primitive::Primitive, record::Record,
-    record_element::RecordElement, string::ByteString, variable::Variable, variant::Variant,
+    arithmetic_operation::ArithmeticOperation, call::Call, case::Case,
+    comparison_operation::ComparisonOperation, if_::If, let_::Let, let_recursive::LetRecursive,
+    primitive::Primitive, record::Record, record_element::RecordElement, string::ByteString,
+    variable::Variable, variant::Variant,
 };
 
 #[derive(Clone, Debug, PartialEq)]
